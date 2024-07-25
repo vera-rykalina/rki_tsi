@@ -1,0 +1,9 @@
+channels:
+  - bioconda
+  - anaconda
+  - conda-forge
+  - pypi
+  - defaults
+dependencies:
+  - nextflow = 23.04.1
+  - graphviz
