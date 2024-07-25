@@ -1,6 +1,6 @@
-Pipeline/.nextflow
-Pipeline/.nextflow.log*
-Pipeline/work/
-Pipeline/conda
-Pipeline/HTML/*
-Pipeline/Results
+.nextflow
+.nextflow.log*
+work/
+conda/
+HTML/*
+Results
