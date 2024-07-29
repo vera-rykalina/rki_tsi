@@ -4,4 +4,5 @@ work/
 conda/
 HTML/*
 Results
-output
+output/
+single_reads/
