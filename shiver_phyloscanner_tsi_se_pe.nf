@@ -1,5 +1,17 @@
 nextflow.enable.dsl = 2
 
+// Run
+
+/* nextflow shiver_phyloscanner_tsi_se_pe.nf \
+-c rki_profile.config 
+--outdir output 
+--fastq "/scratch/rykalinav/rki_recency/Pipeline/RawData/*R{1,2}*.fastq.gz" 
+-profile rki_slurm,rki_mamba \
+--krakendb /scratch/databases/kraken2_nt_20231129/ \
+--mode paired 
+-resume
+*/
+
 // Change is required! Specify your projectDir here
 projectDir = "/scratch/rykalinav/rki_tsi/"
 
@@ -8,6 +20,9 @@ projectDir = "/scratch/rykalinav/rki_tsi/"
 params.alientrimmer = "${projectDir}/bin/AlienTrimmer.jar"
 params.gal_primers = "${projectDir}/data/primers_GallEtAl2012.fasta"
 params.illumina_adapters = "${projectDir}/data/adapters_Illumina.fasta"
+
+
+krakendb = params.krakendb
 
 
 
@@ -64,10 +79,52 @@ process RAW_FASTQC {
 }
 
 
+// kraken2
+process CLASSIFY {
+
+    label "kraken"
+    conda "${projectDir}/env/kraken.yml"
+    publishDir "${params.outdir}/02_classified_reads/${id}", mode: "copy", overwrite: true, pattern: "*.txt"
+
+    input:
+        tuple val(id), path(reads)
+        val (krakendb)
+
+    output:
+        tuple val(id), path("${id}_classified.R*.fastq"),     emit: classified_fastq
+        tuple val(id), path("${id}_unclassified.R*.fastq"),   emit: unclassified_fastq
+        tuple val(id), path("${id}_kraken.out.txt"),          emit: kraken_output
+        tuple val(id), path("${id}_kraken.report.txt"),       emit: kraken_report
+
+
+    script:
+        set_paired = params.mode == 'paired' ? '--paired' : ''
+        set_out_name = params.mode == 'paired' ? '#' : ''
+
+        if (params.mode == "paired"){
+            """
+             kraken2 \
+              --threads ${task.cpus} \
+              --db ${krakendb} \
+              ${set_paired} \
+              --classified-out ${id}_classified.R${set_out_name}.fastq \
+              --unclassified-out ${id}_unclassified.R${set_out_name}.fastq \
+              --output ${id}_kraken.out.txt \
+              --report ${id}_kraken.report.txt \
+              --gzip-compressed \
+              ${reads}
+      """
+    }
+     
+}
+
+
+
+
 process FASTP {
   label "fastp"
   conda "${projectDir}/env/fastp.yml"
-  publishDir "${params.outdir}/02_fastp_trimmed/${id}", mode: "copy", overwrite: true
+  publishDir "${params.outdir}/03_fastp_trimmed/${id}", mode: "copy", overwrite: true
   //debug true
 
   input:
@@ -100,7 +157,7 @@ process FASTP {
 
 process FASTP_FASTQC {
   conda "${projectDir}/env/fastqc.yml"
-  publishDir "${params.outdir}/03_trimmed_fastqc/${id}", mode: "copy", overwrite: true
+  publishDir "${params.outdir}/04_trimmed_fastqc/${id}", mode: "copy", overwrite: true
  // debug true
 
   input:
@@ -119,8 +176,8 @@ process FASTP_FASTQC {
 
 process ALIENTRIMMER {
   conda "${projectDir}/env/multiqc.yml"
-  publishDir "${params.outdir}/04_primer_trimmed/${id}", mode: "copy", overwrite: true
-  debug true
+  publishDir "${params.outdir}/05_primer_trimmed/${id}", mode: "copy", overwrite: true
+  //debug true
   
   input:
      tuple val(id), path(reads)
@@ -158,7 +215,7 @@ process ALIENTRIMMER {
 
 process ALIENTRIMMER_FASTQC {
   conda "${projectDir}/env/fastqc.yml"
-  publishDir "${params.outdir}/05_alientrimmed_fastqc/${id}", mode: "copy", overwrite: true
+  publishDir "${params.outdir}/06_alientrimmed_fastqc/${id}", mode: "copy", overwrite: true
  // debug true
 
   input:
@@ -176,7 +233,7 @@ process ALIENTRIMMER_FASTQC {
 
 process MULTIQC {
   conda "${projectDir}/env/multiqc.yml"
-  publishDir "${params.outdir}/06_multiqc", mode: "copy", overwrite: true
+  publishDir "${params.outdir}/07_multiqc", mode: "copy", overwrite: true
   debug true
   
   input:
@@ -192,6 +249,46 @@ process MULTIQC {
 }
 
 
+process SPADES {
+  label "spades"
+  conda "${projectDir}/env/spades.yml"
+  publishDir "${params.outdir}/08_spades", mode: "copy", overwrite: true,  pattern: "*.fasta"
+  
+  input:
+    tuple val(id), path(reads) 
+
+  output:
+    path "${id}"
+    path "${id}/${id}_contigs.fasta", emit: spadescontigs
+ 
+  script:
+    if (params.mode == "paired"){
+    """
+    spades.py \
+    -1 ${reads[0]} \
+    -2 ${reads[1]} \
+    -o ${id} \
+    --only-assembler \
+    --meta \
+    --threads ${task.cpus}
+  
+
+    mv ${id}/contigs.fasta ${id}/${id}_contigs.fasta
+    """
+
+ }   else if (params.mode == "single") {
+    """
+    spades.py \
+    -s ${reads[0]} \
+    -o ${id} \
+    --only-assembler \
+    --threads ${task.cpus}
+
+    mv ${id}/contigs.fasta ${id}/${id}_contigs.fasta
+    """
+
+  }
+}
 
 // **************************************INPUT CHANNELS***************************************************
 if ( !params.fastq ) {
@@ -214,14 +311,18 @@ if (params.mode == 'paired') {
 
 
 
+
+
+
 workflow {
     ch_raw_fastqc = RAW_FASTQC ( ch_input_fastq )
+    ch_classified_reads = CLASSIFY ( ch_input_fastq, krakendb )
     ch_fastp_trimmed = FASTP ( ch_input_fastq )
     ch_fastp_fastqc = FASTP_FASTQC ( ch_fastp_trimmed.reads) 
     ch_primer_trimmed = ALIENTRIMMER ( ch_fastp_trimmed.reads)
     ch_alientrimmer_fastqc = ALIENTRIMMER_FASTQC ( ch_primer_trimmed.reads) 
     ch_multiqc = MULTIQC ( ch_raw_fastqc.zip.concat(ch_fastp_fastqc.zip).concat(ch_alientrimmer_fastqc.zip).collect() )
-
+    ch_spades = SPADES ( ch_primer_trimmed.reads )
     
 
 }
@@ -230,3 +331,5 @@ workflow {
 // fastaq primer trimming
 //fastaq sequence_trim 07-00462_fastp.R1.fastq.gz 07-00462_fastp.R2.fastq.gz 07-00462_fastp_trimmed.R1.fastq.gz \
 //07-00462_fastp_trimmed.R2.fastq.gz../../../DataShiverInit/primers_GallEtAl2012.fasta --revcomp
+
+// cd-hit-est -i reads.fa -o output.fa -c 0.95 -n 10 -d 999 -M 0 -T 0
