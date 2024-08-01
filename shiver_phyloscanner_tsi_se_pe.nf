@@ -149,7 +149,7 @@ process FASTP {
         --low_complexity_filter \
         --overrepresentation_analysis \
         --qualified_quality_phred 20 \
-        --length_required 50 \
+        --length_required 80 \
         --thread ${task.cpus}
 
     """
