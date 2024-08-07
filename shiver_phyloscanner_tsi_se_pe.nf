@@ -331,7 +331,7 @@ process SPADES {
 
   output:
     path "${id}"
-    path "${id}/${id}_spades_contigs.fasta", emit: spadescontigs
+    tuple val (id), path ("${id}/${id}_spades_contigs.fasta"), emit: spadescontigs
  
   script:
     if (params.mode == "paired"){
@@ -372,7 +372,7 @@ process METASPADES {
 
   output:
     path "${id}"
-    path "${id}/${id}_metaspades_contigs.fasta", emit: spadescontigs
+    tuple val(id), path("${id}/${id}_metaspades_contigs.fasta"), emit: spadescontigs
  
   script:
     if (params.mode == "paired") {
@@ -415,11 +415,8 @@ if (params.mode == 'paired') {
         //.fromPath( "${projectDir}/RawData/*.fastq.gz", checkIfExists: true )
         .map { file -> [file.simpleName, [file]]}
         .map {tuple ( it[0].split("HIV")[1].split("_")[0], it[1][0])}
-        .view()
+
 }
-
-
-
 
 
 
@@ -437,7 +434,8 @@ workflow {
     ch_multiqc = MULTIQC ( ch_kraken_fastqc.zip.concat(ch_alientrimmer_fastqc.zip).concat(ch_fastp_fastqc.zip).concat(ch_raw_fastqc.zip).collect() )
     ch_spades = SPADES ( ch_primer_trimmed.reads )
     ch_metaspades = METASPADES ( ch_primer_trimmed.reads )
-
+    ch_spades_combined = ch_spades.spadescontigs.combine(ch_metaspades.spadescontigs, by:0).view()
+    ch_all_contigs = ch_spades_combined.collectFile(name: "contigs.fasta", storeDir: "${projectDir}/${params.outdir}/13_all_contigs")
     
 
 }
