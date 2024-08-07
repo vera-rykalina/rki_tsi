@@ -102,7 +102,6 @@ process CLASSIFY {
         set_paired = params.mode == 'paired' ? '--paired' : ''
         set_out_name = params.mode == 'paired' ? '#' : ''
 
-        if (params.mode == "paired"){
             """
              kraken2 \
               --threads ${task.cpus} \
@@ -114,9 +113,7 @@ process CLASSIFY {
               --report ${id}_kraken.report.txt \
               --gzip-compressed \
               ${reads}
-      """
-    }
-     
+          """     
 }
 
 
@@ -257,8 +254,8 @@ process ALIENTRIMMER {
      tuple val(id), path(reads)
   
   output:
-    tuple val(id), path("${id}_alientrimmer.R.{1,2}.fastq.gz"), emit: reads
-    tuple val(id), path("${id}_alientrimmer.R.S.fastq.gz"), emit: singletons
+    tuple val(id), path("${id}_alientrimmer.R{1,2}.fastq.gz"), emit: reads
+    //tuple val(id), path("${id}_alientrimmer.R.S.fastq.gz"), emit: singletons
 
 
   script:
@@ -270,7 +267,7 @@ process ALIENTRIMMER {
        -2 ${reads[1]} \
        -a ${params.gal_primers} \
        -o ${id}_alientrimmer.R \
-       -k 9 \
+       -k 15 \
        -z
   """
   } else if (params.mode == "single") {
@@ -281,6 +278,7 @@ process ALIENTRIMMER {
            -o ${id}_alientrimmer.R \
            -k 15 \
            -z
+    mv ${id}_alientrimmer.R.fastq.gz ${id}_alientrimmer.R1.fastq.gz
     """
   }
 
@@ -333,7 +331,7 @@ process SPADES {
 
   output:
     path "${id}"
-    path "${id}/${id}_contigs.fasta", emit: spadescontigs
+    path "${id}/${id}_spades_contigs.fasta", emit: spadescontigs
  
   script:
     if (params.mode == "paired"){
@@ -343,11 +341,10 @@ process SPADES {
     -2 ${reads[1]} \
     -o ${id} \
     --only-assembler \
-    --meta \
     --threads ${task.cpus}
   
 
-    mv ${id}/contigs.fasta ${id}/${id}_contigs.fasta
+    mv ${id}/contigs.fasta ${id}/${id}_spades_contigs.fasta
     """
 
  }   else if (params.mode == "single") {
@@ -358,10 +355,47 @@ process SPADES {
     --only-assembler \
     --threads ${task.cpus}
 
-    mv ${id}/contigs.fasta ${id}/${id}_contigs.fasta
+    mv ${id}/contigs.fasta ${id}/${id}_spades_contigs.fasta
     """
 
   }
+
+}
+
+process METASPADES {
+  label "spades"
+  conda "${projectDir}/env/spades.yml"
+  publishDir "${params.outdir}/12_metaspades", mode: "copy", overwrite: true
+  
+  input:
+    tuple val(id), path(reads) 
+
+  output:
+    path "${id}"
+    path "${id}/${id}_metaspades_contigs.fasta", emit: spadescontigs
+ 
+  script:
+    if (params.mode == "paired") {
+    """
+    spades.py \
+    -1 ${reads[0]} \
+    -2 ${reads[1]} \
+    -o ${id} \
+    --only-assembler \
+    --meta \
+    --threads ${task.cpus}
+  
+
+    mv ${id}/contigs.fasta ${id}/${id}_metaspades_contigs.fasta
+    """
+    } else if (params.mode == "single") {
+    
+    """
+    mkdir ${id}
+    touch ${id}/${id}_metaspades_contigs.fasta
+    """
+    }
+
 }
 
 // **************************************INPUT CHANNELS***************************************************
@@ -380,7 +414,8 @@ if (params.mode == 'paired') {
         .fromPath( params.fastq, checkIfExists: true )
         //.fromPath( "${projectDir}/RawData/*.fastq.gz", checkIfExists: true )
         .map { file -> [file.simpleName, [file]]}
-        .map {tuple ( it[0].split("HIV")[1].split("_")[0], it[1][0])}.view()
+        .map {tuple ( it[0].split("HIV")[1].split("_")[0], it[1][0])}
+        .view()
 }
 
 
@@ -398,8 +433,11 @@ workflow {
     ch_fastp_fastqc = FASTP_FASTQC ( ch_fastp_trimmed.reads) 
     ch_primer_trimmed = ALIENTRIMMER ( ch_fastp_trimmed.reads)
     ch_alientrimmer_fastqc = ALIENTRIMMER_FASTQC ( ch_primer_trimmed.reads) 
-    ch_multiqc = MULTIQC ( ch_raw_fastqc.zip.concat(ch_fastp_fastqc.zip).concat(ch_alientrimmer_fastqc.zip).concat(ch_kraken_fastqc.zip).collect() )
+    //ch_multiqc = MULTIQC ( ch_raw_fastqc.zip.concat(ch_fastp_fastqc.zip).concat(ch_alientrimmer_fastqc.zip).concat(ch_kraken_fastqc.zip).collect() )
+    ch_multiqc = MULTIQC ( ch_kraken_fastqc.zip.concat(ch_alientrimmer_fastqc.zip).concat(ch_fastp_fastqc.zip).concat(ch_raw_fastqc.zip).collect() )
     ch_spades = SPADES ( ch_primer_trimmed.reads )
+    ch_metaspades = METASPADES ( ch_primer_trimmed.reads )
+
     
 
 }
