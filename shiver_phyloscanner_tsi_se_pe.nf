@@ -20,8 +20,11 @@ projectDir = "/scratch/rykalinav/rki_tsi/"
 params.alientrimmer = "${projectDir}/bin/AlienTrimmer.jar"
 params.gal_primers = "${projectDir}/data/primers_GallEtAl2012.fasta"
 params.illumina_adapters = "${projectDir}/data/adapters_Illumina.fasta"
+params.config = "${projectDir}/bin/config.sh"
+alignment = params.alignment
 
 
+// Parameters for kraken
 krakendb = params.krakendb
 // taxid of HIV-1 
 params.taxid = "11676"
@@ -444,6 +447,33 @@ process CD_HIT_EST {
 }
 
 
+// SHIVER PART (including KALLISTO)
+process INITIALISATION {
+  conda "${projectDir}/env/shiver.yml"
+  publishDir "${projectDir}/${params.outdir}/16_init_dir", mode: "copy", overwrite: true
+
+  input:
+     val (alignment)
+     
+  output:
+     path "InitDir", emit: InitDir
+     path "InitDir/ExistingRefsUngapped.fasta", emit: ExistingRefsUngapped
+     path "InitDir/IndividualRefs/*.fasta", emit: IndividualRefs
+  script:
+  
+  """
+  shiver_init.sh \
+    InitDir \
+    ${params.config} \
+    ${alignment} \
+    ${params.illumina_adapters} \
+    ${params.gal_primers}
+  """  
+}
+
+
+
+
 // **************************************INPUT CHANNELS***************************************************
 if ( !params.fastq ) {
     exit 1, "input missing, use [--fastq]"
@@ -481,9 +511,9 @@ workflow {
     ch_spades = SPADES ( ch_primer_trimmed.reads )
     ch_metaspades = METASPADES ( ch_primer_trimmed.reads )
     ch_spades_combined = ch_spades.spadescontigs.combine( ch_metaspades.spadescontigs, by:0 )
-    ch_merged_contigs = MERGE_CONTIGS ( ch_spades_combined ).view()
+    ch_merged_contigs = MERGE_CONTIGS ( ch_spades_combined )
     ch_cd_hit_est = CD_HIT_EST ( ch_merged_contigs )
-
+    ch_initdir = INITIALISATION ( alignment )
 }
 
 
