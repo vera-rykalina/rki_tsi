@@ -1,0 +1,20 @@
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3 
+  - bzip2
+  - mafft
+  - smalt=0.7.6
+  - picard=2.18
+  - bwa
+  - picard=2.18
+  - biopython=1.76
+  - bowtie2=2.3.3.1
+  - samtools=1.6
+  - blast=2.7.1
+  - pip
+  - pip:
+    - pyfastaq
+    - six
