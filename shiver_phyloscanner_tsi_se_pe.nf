@@ -9,6 +9,7 @@ nextflow.enable.dsl = 2
 -profile rki_slurm,rki_mamba \
 --krakendb /scratch/databases/kraken2_nt_20231129/ \
 --mode paired 
+--alignment /scratch/rykalinav/rki_tsi/data/HIV1_COM_2021_genome_DNA.fasta
 -resume
 */
 
