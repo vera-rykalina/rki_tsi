@@ -35,7 +35,7 @@ log.info """
        Affiliation: Robert Koch Institute 
         Acknowledgement: Tanay Golubchik
               Created: 25 June 2024
-           Last Updated: 25 July 2024
+           Last Updated: 8 August 2024
 ====================================================
          """
 
@@ -254,7 +254,7 @@ process ALIENTRIMMER {
      tuple val(id), path(reads)
   
   output:
-    tuple val(id), path("${id}_alientrimmer.R{1,2}.fastq.gz"), emit: reads
+    tuple val(id), path("${id}_alientrimmer.R.{1,2}.fastq.gz"), emit: reads
     //tuple val(id), path("${id}_alientrimmer.R.S.fastq.gz"), emit: singletons
 
 
@@ -398,6 +398,52 @@ process METASPADES {
 
 }
 
+
+process MERGE_CONTIGS {
+  publishDir "${params.outdir}/14_merged_contigs", mode: "copy", overwrite: true
+  
+  input:
+    tuple val(id), path(spades_contigs), path(metaspades_contigs) 
+
+  output:
+    tuple val (id), path ("${id}_merged_contigs.fasta")
+ 
+  script:
+
+    """
+   cat ${spades_contigs} ${metaspades_contigs} > "${id}_merged_contigs.fasta"
+    """
+}
+
+
+// cluster contigs
+process CD_HIT_EST {
+  label "cd_hit_est"
+  conda "${projectDir}/env/cd-hit.yml"
+  publishDir "${params.outdir}/15_clustered_contigs", mode: "copy", overwrite: true
+  
+  input:
+    tuple val(id), path(contigs) 
+
+  output:
+    tuple val (id), path ("${id}_clustered_contigs.fasta")
+ 
+  script:
+
+    """
+    cd-hit-est \
+       -i ${contigs} \
+       -o ${id}_clustered_contigs.fasta \
+       -c 0.9 \
+       -n 10 \
+       -d 999 \
+       -l 299 \
+       -T ${task.cpus}
+    """
+
+}
+
+
 // **************************************INPUT CHANNELS***************************************************
 if ( !params.fastq ) {
     exit 1, "input missing, use [--fastq]"
@@ -434,9 +480,9 @@ workflow {
     ch_multiqc = MULTIQC ( ch_kraken_fastqc.zip.concat(ch_alientrimmer_fastqc.zip).concat(ch_fastp_fastqc.zip).concat(ch_raw_fastqc.zip).collect() )
     ch_spades = SPADES ( ch_primer_trimmed.reads )
     ch_metaspades = METASPADES ( ch_primer_trimmed.reads )
-    ch_spades_combined = ch_spades.spadescontigs.combine(ch_metaspades.spadescontigs, by:0).view()
-    ch_all_contigs = ch_spades_combined.collectFile(name: "contigs.fasta", storeDir: "${projectDir}/${params.outdir}/13_all_contigs")
-    
+    ch_spades_combined = ch_spades.spadescontigs.combine( ch_metaspades.spadescontigs, by:0 )
+    ch_merged_contigs = MERGE_CONTIGS ( ch_spades_combined ).view()
+    ch_cd_hit_est = CD_HIT_EST ( ch_merged_contigs )
 
 }
 
@@ -445,4 +491,4 @@ workflow {
 //fastaq sequence_trim 07-00462_fastp.R1.fastq.gz 07-00462_fastp.R2.fastq.gz 07-00462_fastp_trimmed.R1.fastq.gz \
 //07-00462_fastp_trimmed.R2.fastq.gz../../../DataShiverInit/primers_GallEtAl2012.fasta --revcomp
 
-// cd-hit-est -i reads.fa -o output.fa -c 0.95 -n 10 -d 999 -M 0 -T 0
+// cd-hit-est -i reads.fa -o output.fa -c 0.9 -n 10 -d 999
