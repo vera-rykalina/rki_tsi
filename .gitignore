@@ -5,4 +5,7 @@ conda/
 HTML/*
 Results
 output/
+output_pe/
+output_se/
 single_reads/
+shiver/
