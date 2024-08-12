@@ -73,8 +73,8 @@ process RAW_FASTQC {
   input:
     tuple val(id), path(reads)
   output:
-    path "${id}*_fastqc.html", emit: html
-    path "${id}*_fastqc.zip",  emit: zip
+    path "${id}*_fastqc.html", emit: Html
+    path "${id}*_fastqc.zip",  emit: Zip
   script:
     
     """
@@ -100,10 +100,10 @@ process CLASSIFY {
         val (krakendb)
 
     output:
-        tuple val(id), path("${id}_classified.R*.fastq"),     emit: classified_fastq
-        tuple val(id), path("${id}_unclassified.R*.fastq"),   emit: unclassified_fastq
-        tuple val(id), path("${id}_kraken.out.txt"),          emit: kraken_output
-        tuple val(id), path("${id}_kraken.report.txt"),       emit: kraken_report
+        tuple val(id), path("${id}_classified.R*.fastq"),     emit: ClassifiedFastq
+        tuple val(id), path("${id}_unclassified.R*.fastq"),   emit: UnclassifiedFastq
+        tuple val(id), path("${id}_kraken.out.txt"),          emit: KrakenOutput
+        tuple val(id), path("${id}_kraken.report.txt"),       emit: KrakenReport
 
 
     script:
@@ -160,7 +160,7 @@ process EXTRACT {
 
 // merge unclassified and filtered reads
 process MERGE {
-    publishDir "${params.outdir}/04_merged_reads", failOnError: true, mode: "copy", overwrite: true
+    publishDir "${params.outdir}/04_merged_reads/${id}", failOnError: true, mode: "copy", overwrite: true
 
     input:
         tuple val(id), path(unclassified), path(filtered)
@@ -190,8 +190,8 @@ process KRAKEN_FASTQC {
   input:
     tuple val(id), path(reads)
   output:
-    path "${id}*_fastqc.html", emit: html
-    path "${id}*_fastqc.zip",  emit: zip
+    path "${id}*_fastqc.html", emit: Html
+    path "${id}*_fastqc.zip",  emit: Zip
  
   script:
     
@@ -210,9 +210,9 @@ process FASTP {
     tuple val(id), path(reads)
 
   output:
-    tuple val(id), path("${id}_fastp.R{1,2}.fastq.gz"), emit: reads
-    tuple val(id), path("${id}_fastp.json"),            emit: json
-    tuple val(id), path("${id}_fastp.html"),            emit: html
+    tuple val(id), path("${id}_fastp.R{1,2}.fastq.gz"), emit: Reads
+    tuple val(id), path("${id}_fastp.json"),            emit: Json
+    tuple val(id), path("${id}_fastp.html"),            emit: Html
 
  script:
     set_paired_reads = params.mode == 'single' ? '' : "--in2 ${reads[1]} --out2 ${id}_fastp.R2.fastq.gz --unpaired1 ${id}.SE.R1.fastq.gz --unpaired2 ${id}.SE.R2.fastq.gz"
@@ -242,8 +242,8 @@ process FASTP_FASTQC {
   input:
     tuple val(id), path(reads)
   output:
-    path "${id}*_fastqc.html", emit: html
-    path "${id}*_fastqc.zip",  emit: zip
+    path "${id}*_fastqc.html", emit: Html
+    path "${id}*_fastqc.zip",  emit: Zip
  
   script:
     
@@ -263,8 +263,8 @@ process ALIENTRIMMER {
      val (primers)
   
   output:
-    tuple val(id), path("${id}_alientrimmer.R*.fastq.gz"), emit: reads
-    //tuple val(id), path("${id}_alientrimmer.R.S.fastq.gz"), emit: singletons
+    tuple val(id), path("${id}_alientrimmer.R*.fastq.gz")
+
 
 
   script:
@@ -302,8 +302,8 @@ process ALIENTRIMMER_FASTQC {
   input:
     tuple val(id), path(reads)
   output:
-    path "${id}*_fastqc.html", emit: html
-    path "${id}*_fastqc.zip",  emit: zip
+    path "${id}*_fastqc.html", emit: Html
+    path "${id}*_fastqc.zip",  emit: Zip
  
   script:
     
@@ -321,7 +321,7 @@ process MULTIQC {
     path report_files
 
   output:
-    path "multiqc_report.html", emit: report
+    path "multiqc_report.html"
  
   script:
   """
@@ -340,7 +340,7 @@ process SPADES {
 
   output:
     path "${id}"
-    tuple val (id), path ("${id}/${id}_spades_contigs.fasta"), emit: spadescontigs
+    tuple val (id), path ("${id}/${id}_spades_contigs.fasta"), emit: SpadesContigs
  
   script:
     if (params.mode == "paired"){
@@ -381,7 +381,7 @@ process METASPADES {
 
   output:
     path "${id}"
-    tuple val(id), path("${id}/${id}_metaspades_contigs.fasta"), emit: spadescontigs
+    tuple val(id), path("${id}/${id}_metaspades_contigs.fasta"), emit: MetaspadesContigs
  
   script:
     if (params.mode == "paired") {
@@ -454,7 +454,7 @@ process CD_HIT_EST {
 
 
 // SHIVER PART (including KALLISTO)
-process INITIALISATION {
+process SHIVER_INIT {
   conda "${projectDir}/env/shiver.yml"
   publishDir "${projectDir}/${params.outdir}/16_init_dir", mode: "copy", overwrite: true
 
@@ -479,8 +479,8 @@ process INITIALISATION {
 }
 
 
-process FASTQ_ID_HEADER {
-  conda "${projectDir}/env/shiver.yml"
+process FASTQ_RENAME_HEADER {
+  //conda "${projectDir}/env/shiver.yml"
   publishDir "${params.outdir}/17_renamed_reads", mode: "copy", overwrite: true
   debug true
 
@@ -492,7 +492,7 @@ process FASTQ_ID_HEADER {
   script:
    if (params.mode == "paired") {
    """
-   cat ${reads[0]} |\
+   zcat ${reads[0]} |\
       awk '{if (NR%4 == 1) {print \$1 "/" \$2} else print}' |\
       sed 's/:N:.*//' |\
       gzip -c > ${id}_renamed_R1.fastq.gz
@@ -500,7 +500,7 @@ process FASTQ_ID_HEADER {
    rm ${reads[0]}
 
    
-    cat ${reads[1]} |\
+    zcat ${reads[1]} |\
       awk '{if (NR%4 == 1) {print \$1 "/" \$2} else print}' |\
       sed 's/:N:.*//' |\
       gzip -c > ${id}_renamed_R2.fastq.gz
@@ -509,7 +509,7 @@ process FASTQ_ID_HEADER {
    """
 } else if (params.mode == "single") {
       """
-      cat ${reads[0]} |\
+      zcat ${reads[0]} |\
       awk '{if (NR%4 == 1) {print \$1 "/" \$2} else print}' |\
       sed 's/:N:.*//' |\
       gzip -c > ${id}_renamed_R1.fastq.gz
@@ -520,6 +520,77 @@ process FASTQ_ID_HEADER {
 
 }
 
+process KALLISTO_INDEX {
+  conda "${projectDir}/env/kallisto.yml"
+  publishDir "${projectDir}/${params.outdir}/18_kallisto_idx", mode: "copy", overwrite: true
+
+  input:
+     path fasta
+  
+  output:
+     path "*.idx"
+ 
+  script:
+  """
+  kallisto index --index ExistingRefsUngapped.idx ${fasta}
+  """
+}
+
+process KALLISTO_QUANT {
+  conda "${projectDir}/env/kallisto.yml"
+  publishDir "${projectDir}/${params.outdir}/19_kallisto_quant", mode: "copy", overwrite: true
+  debug true
+
+  input:
+     tuple path(index), val(id), path(reads)
+
+  output:
+     tuple val(id), path("${id}/${id}_abundance.tsv")
+   
+  script:
+   if (params.mode == "paired") {
+   """
+   kallisto quant \
+    -i ${index} \
+    -o ${id} \
+    --plaintext ${reads[0]} ${reads[1]}
+
+    mv ${id}/abundance.tsv ${id}/${id}_abundance.tsv
+  """
+   } else if (params.mode == "single") {
+     """
+     kallisto quant \
+    -i ${index} \
+    -o ${id} \
+    --plaintext \
+    --single \
+    --fragment-length 200 \
+    --sd 20 \
+    ${reads[0]}
+
+    mv ${id}/abundance.tsv ${id}/${id}_abundance.tsv
+    """
+   }
+}
+
+process BEST_ALIGNMENT {
+  publishDir "${projectDir}/${params.outdir}/20_best_ref", mode: "copy", overwrite: true
+  debug true
+
+  input:
+     path (alignments)
+     tuple val(id), path(abundancetsv)
+
+  output:
+     tuple val(id), path("${id}_bestRef.fasta")
+   
+  script:
+   """
+   BestRef=\$(sort -k5 -g ${abundancetsv} | tail -n1 | cut -f1)
+   echo "Sample ID: " ${id} "\nBest Kallisto Reference: " \${BestRef} 
+   mv \${BestRef}.fasta  ${id}_bestRef.fasta
+   """
+}
 
 
 // **************************************INPUT CHANNELS***************************************************
@@ -547,21 +618,27 @@ if (params.mode == 'paired') {
 workflow {
     ch_raw_fastqc = RAW_FASTQC ( ch_input_fastq )
     ch_classified_reads = CLASSIFY ( ch_input_fastq, krakendb )
-    ch_filtered_reads = EXTRACT ( ch_classified_reads.classified_fastq, ch_classified_reads.kraken_output, ch_classified_reads.kraken_report, params.taxid )
-    ch_merged_reads = MERGE ( ch_classified_reads.unclassified_fastq.combine(ch_filtered_reads, by:0) )
+    ch_filtered_reads = EXTRACT ( ch_classified_reads.ClassifiedFastq, ch_classified_reads.KrakenOutput, ch_classified_reads.KrakenReport, params.taxid )
+    ch_merged_reads = MERGE ( ch_classified_reads.UnclassifiedFastq.combine( ch_filtered_reads, by:0 ) )
     ch_kraken_fastqc = KRAKEN_FASTQC ( ch_merged_reads )
     ch_fastp_trimmed = FASTP (  ch_merged_reads )
-    ch_fastp_fastqc = FASTP_FASTQC ( ch_fastp_trimmed.reads) 
-    ch_primer_trimmed = ALIENTRIMMER ( ch_fastp_trimmed.reads, primers )
-    ch_alientrimmer_fastqc = ALIENTRIMMER_FASTQC ( ch_primer_trimmed.reads) 
-    ch_multiqc = MULTIQC ( ch_raw_fastqc.zip.concat(ch_fastp_fastqc.zip).concat(ch_alientrimmer_fastqc.zip).concat(ch_kraken_fastqc.zip).collect() )
-    ch_spades = SPADES ( ch_primer_trimmed.reads )
-    ch_metaspades = METASPADES ( ch_primer_trimmed.reads )
-    ch_spades_combined = ch_spades.spadescontigs.combine( ch_metaspades.spadescontigs, by:0 )
+    ch_fastp_fastqc = FASTP_FASTQC ( ch_fastp_trimmed.Reads ) 
+    ch_primer_trimmed = ALIENTRIMMER ( ch_fastp_trimmed.Reads, primers )
+    ch_alientrimmer_fastqc = ALIENTRIMMER_FASTQC ( ch_primer_trimmed ) 
+    ch_multiqc = MULTIQC ( ch_raw_fastqc.Zip.concat(ch_fastp_fastqc.Zip).concat(ch_alientrimmer_fastqc.Zip).concat(ch_kraken_fastqc.Zip).collect() )
+    ch_spades = SPADES ( ch_primer_trimmed )
+    ch_metaspades = METASPADES ( ch_primer_trimmed )
+    ch_spades_combined = ch_spades.SpadesContigs.combine( ch_metaspades.MetaspadesContigs, by:0 )
     ch_merged_contigs = MERGE_CONTIGS ( ch_spades_combined )
     ch_cd_hit_est = CD_HIT_EST ( ch_merged_contigs )
-    ch_initdir = INITIALISATION ( params.alignment, primers )
-    ch_fastq_id_header = FASTQ_ID_HEADER ( ch_filtered_reads )
+    ch_fastq_renamed_header = FASTQ_RENAME_HEADER ( ch_merged_reads )
+    ch_initdir = SHIVER_INIT ( params.alignment, primers )
+    ch_kallisto_index = KALLISTO_INDEX ( ch_initdir.ExistingRefsUngapped )
+    ch_kallisto_index_reads = ch_kallisto_index.combine( ch_fastq_renamed_header )
+    ch_kallisto_quant = KALLISTO_QUANT( ch_kallisto_index_reads )
+    ch_bestRef = BEST_ALIGNMENT ( ch_initdir.IndividualRefs, ch_kallisto_quant )
+   
+
 }
 
 
