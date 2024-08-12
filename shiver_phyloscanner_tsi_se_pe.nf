@@ -9,7 +9,8 @@ nextflow.enable.dsl = 2
 -profile rki_slurm,rki_mamba \
 --krakendb /scratch/databases/kraken2_nt_20231129/ \
 --mode paired 
---alignment /scratch/rykalinav/rki_tsi/data/HIV1_COM_2021_genome_DNA.fasta
+--alignment /scratch/rykalinav/rki_tsi/data/HIV1_COM_2021_genome_DNA.fasta \
+--primers /scratch/rykalinav/rki_tsi/data/primers_GallEtAl2012.fasta \
 -resume
 */
 
@@ -19,11 +20,14 @@ projectDir = "/scratch/rykalinav/rki_tsi/"
 
 // Parameters for shiver
 params.alientrimmer = "${projectDir}/bin/AlienTrimmer.jar"
-params.gal_primers = "${projectDir}/data/primers_GallEtAl2012.fasta"
 params.illumina_adapters = "${projectDir}/data/adapters_Illumina.fasta"
 params.config = "${projectDir}/bin/config.sh"
-alignment = params.alignment
+params.remove_whitespace = "${projectDir}/bin/tools/RemoveTrailingWhitespace.py"
+params.alignment = "${projectDir}/data/HIV1_COM_2021_genome_DNA.fasta"
 
+//alignment = params.alignment
+primers = params.primers
+//params.gal_primers = "${projectDir}/data/primers_GallEtAl2012.fasta"
 
 // Parameters for kraken
 krakendb = params.krakendb
@@ -256,9 +260,10 @@ process ALIENTRIMMER {
   
   input:
      tuple val(id), path(reads)
+     val (primers)
   
   output:
-    tuple val(id), path("${id}_alientrimmer.R.{1,2}.fastq.gz"), emit: reads
+    tuple val(id), path("${id}_alientrimmer.R*.fastq.gz"), emit: reads
     //tuple val(id), path("${id}_alientrimmer.R.S.fastq.gz"), emit: singletons
 
 
@@ -269,7 +274,7 @@ process ALIENTRIMMER {
   java -jar ${params.alientrimmer} \
        -1 ${reads[0]} \
        -2 ${reads[1]} \
-       -a ${params.gal_primers} \
+       -a ${primers} \
        -o ${id}_alientrimmer.R \
        -k 15 \
        -z
@@ -278,7 +283,7 @@ process ALIENTRIMMER {
     """
       java -jar ${params.alientrimmer} \
            -i ${reads[0]} \
-           -a ${params.gal_primers} \
+           -a ${primers} \
            -o ${id}_alientrimmer.R \
            -k 15 \
            -z
@@ -455,6 +460,7 @@ process INITIALISATION {
 
   input:
      val (alignment)
+     val (primers)
      
   output:
      path "InitDir", emit: InitDir
@@ -468,10 +474,51 @@ process INITIALISATION {
     ${params.config} \
     ${alignment} \
     ${params.illumina_adapters} \
-    ${params.gal_primers}
+    ${primers}
   """  
 }
 
+
+process FASTQ_ID_HEADER {
+  conda "${projectDir}/env/shiver.yml"
+  publishDir "${params.outdir}/17_renamed_reads", mode: "copy", overwrite: true
+  debug true
+
+  input:
+    tuple val(id), path(reads)
+  output:
+    tuple val("${id}"), path("${id}_renamed_R{1,2}.fastq.gz")
+  
+  script:
+   if (params.mode == "paired") {
+   """
+   cat ${reads[0]} |\
+      awk '{if (NR%4 == 1) {print \$1 "/" \$2} else print}' |\
+      sed 's/:N:.*//' |\
+      gzip -c > ${id}_renamed_R1.fastq.gz
+   
+   rm ${reads[0]}
+
+   
+    cat ${reads[1]} |\
+      awk '{if (NR%4 == 1) {print \$1 "/" \$2} else print}' |\
+      sed 's/:N:.*//' |\
+      gzip -c > ${id}_renamed_R2.fastq.gz
+  
+   rm ${reads[1]}
+   """
+} else if (params.mode == "single") {
+      """
+      cat ${reads[0]} |\
+      awk '{if (NR%4 == 1) {print \$1 "/" \$2} else print}' |\
+      sed 's/:N:.*//' |\
+      gzip -c > ${id}_renamed_R1.fastq.gz
+
+    rm ${reads[0]}
+    """
+  }
+
+}
 
 
 
@@ -505,16 +552,16 @@ workflow {
     ch_kraken_fastqc = KRAKEN_FASTQC ( ch_merged_reads )
     ch_fastp_trimmed = FASTP (  ch_merged_reads )
     ch_fastp_fastqc = FASTP_FASTQC ( ch_fastp_trimmed.reads) 
-    ch_primer_trimmed = ALIENTRIMMER ( ch_fastp_trimmed.reads)
+    ch_primer_trimmed = ALIENTRIMMER ( ch_fastp_trimmed.reads, primers )
     ch_alientrimmer_fastqc = ALIENTRIMMER_FASTQC ( ch_primer_trimmed.reads) 
-    //ch_multiqc = MULTIQC ( ch_raw_fastqc.zip.concat(ch_fastp_fastqc.zip).concat(ch_alientrimmer_fastqc.zip).concat(ch_kraken_fastqc.zip).collect() )
-    ch_multiqc = MULTIQC ( ch_kraken_fastqc.zip.concat(ch_alientrimmer_fastqc.zip).concat(ch_fastp_fastqc.zip).concat(ch_raw_fastqc.zip).collect() )
+    ch_multiqc = MULTIQC ( ch_raw_fastqc.zip.concat(ch_fastp_fastqc.zip).concat(ch_alientrimmer_fastqc.zip).concat(ch_kraken_fastqc.zip).collect() )
     ch_spades = SPADES ( ch_primer_trimmed.reads )
     ch_metaspades = METASPADES ( ch_primer_trimmed.reads )
     ch_spades_combined = ch_spades.spadescontigs.combine( ch_metaspades.spadescontigs, by:0 )
     ch_merged_contigs = MERGE_CONTIGS ( ch_spades_combined )
     ch_cd_hit_est = CD_HIT_EST ( ch_merged_contigs )
-    ch_initdir = INITIALISATION ( alignment )
+    ch_initdir = INITIALISATION ( params.alignment, primers )
+    ch_fastq_id_header = FASTQ_ID_HEADER ( ch_filtered_reads )
 }
 
 
