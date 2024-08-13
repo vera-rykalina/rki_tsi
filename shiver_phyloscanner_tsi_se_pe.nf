@@ -23,10 +23,11 @@ params.alientrimmer = "${projectDir}/bin/AlienTrimmer.jar"
 params.illumina_adapters = "${projectDir}/data/adapters_Illumina.fasta"
 params.config = "${projectDir}/bin/config.sh"
 params.remove_whitespace = "${projectDir}/bin/tools/RemoveTrailingWhitespace.py"
-params.alignment = "${projectDir}/data/HIV1_COM_2021_genome_DNA.fasta"
+params.alignment = "${projectDir}/data/HIV1_COM_2022_genome_DNA.fasta"
 
-//alignment = params.alignment
+
 primers = params.primers
+//alignment = params.alignment
 //params.gal_primers = "${projectDir}/data/primers_GallEtAl2012.fasta"
 
 // Parameters for kraken
@@ -350,7 +351,7 @@ process SPADES {
     -2 ${reads[1]} \
     -o ${id} \
     --only-assembler \
-    --threads ${task.cpus}
+    --threads ${task.cpus} || mkdir -p ${id} && touch ${id}/contigs.fasta
   
 
     mv ${id}/contigs.fasta ${id}/${id}_spades_contigs.fasta
@@ -362,7 +363,7 @@ process SPADES {
     -s ${reads[0]} \
     -o ${id} \
     --only-assembler \
-    --threads ${task.cpus}
+    --threads ${task.cpus} || mkdir -p ${id} && touch ${id}/contigs.fasta
 
     mv ${id}/contigs.fasta ${id}/${id}_spades_contigs.fasta
     """
@@ -392,7 +393,7 @@ process METASPADES {
     -o ${id} \
     --only-assembler \
     --meta \
-    --threads ${task.cpus}
+    --threads ${task.cpus} || mkdir -p ${id} && touch ${id}/contigs.fasta
   
 
     mv ${id}/contigs.fasta ${id}/${id}_metaspades_contigs.fasta
@@ -420,7 +421,7 @@ process MERGE_CONTIGS {
   script:
 
     """
-   cat ${spades_contigs} ${metaspades_contigs} > "${id}_merged_contigs.fasta"
+   cat ${spades_contigs} ${metaspades_contigs} > ${id}_merged_contigs.fasta
     """
 }
 
@@ -447,7 +448,7 @@ process CD_HIT_EST {
        -n 10 \
        -d 999 \
        -l 299 \
-       -T ${task.cpus}
+       -T ${task.cpus} || touch ${id}_clustered_contigs.fasta
     """
 
 }
@@ -593,6 +594,44 @@ process BEST_ALIGNMENT {
 }
 
 
+process SHIVER_ALIGN {
+  conda "${projectDir}/env/shiver.yml"
+  publishDir "${params.outdir}/21_alignments/${id}", mode: "copy", overwrite: true
+  //debug true
+  
+  input:
+    path initdir
+    tuple val(id), path(contigs)
+
+  output:
+    tuple val("${id}"), path("${id}_wRefs.fasta"), path("${id}.blast")
+
+  script:
+    if ( contigs.size() > 0 ) {
+    """
+    shiver_align_contigs.sh \
+      ${initdir} \
+      ${params.config} \
+      ${contigs} \
+      ${id}
+
+    rm temp_*
+    rm *_MergedHits.blast*
+    mv ${id}_cut_wRefs.fasta ${id}_wRefs.fasta || mv ${id}_raw_wRefs.fasta ${id}_wRefs.fasta 
+    """
+  } else {
+    """
+     printf "There is no contig for sample with ID: ${id}"
+     touch ${id}.blast
+     touch ${id}_wRefs.fasta
+    """
+  }
+}
+
+
+
+
+
 // **************************************INPUT CHANNELS***************************************************
 if ( !params.fastq ) {
     exit 1, "input missing, use [--fastq]"
@@ -636,9 +675,10 @@ workflow {
     ch_kallisto_index = KALLISTO_INDEX ( ch_initdir.ExistingRefsUngapped )
     ch_kallisto_index_reads = ch_kallisto_index.combine( ch_fastq_renamed_header )
     ch_kallisto_quant = KALLISTO_QUANT( ch_kallisto_index_reads )
-    ch_bestRef = BEST_ALIGNMENT ( ch_initdir.IndividualRefs, ch_kallisto_quant )
-   
-
+    ch_best_ref = BEST_ALIGNMENT ( ch_initdir.IndividualRefs, ch_kallisto_quant )
+    ch_wref = SHIVER_ALIGN ( ch_initdir.InitDir, ch_merged_contigs )
+    // Combine according to a key that is the first value of every first element, which is a list
+    ch_map_args = ch_best_ref.combine(ch_merged_contigs, by:0).combine(ch_wref, by:0).combine(ch_fastq_renamed_header, by:0).view()
 }
 
 
