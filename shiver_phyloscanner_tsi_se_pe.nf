@@ -3,13 +3,13 @@ nextflow.enable.dsl = 2
 // Run
 
 /* nextflow shiver_phyloscanner_tsi_se_pe.nf \
--c rki_profile.config 
---outdir output 
+-c rki_tsi_profile.config 
+--outdir output_pe
 --fastq "/scratch/rykalinav/rki_recency/Pipeline/RawData/*R{1,2}*.fastq.gz" 
 -profile rki_slurm,rki_mamba \
 --krakendb /scratch/databases/kraken2_nt_20231129/ \
 --mode paired 
---alignment /scratch/rykalinav/rki_tsi/data/HIV1_COM_2021_genome_DNA.fasta \
+--alignment /scratch/rykalinav/rki_tsi/data/HIV1_COM_2022_genome_DNA.fasta \
 --primers /scratch/rykalinav/rki_tsi/data/primers_GallEtAl2012.fasta \
 -resume
 */
@@ -21,7 +21,8 @@ projectDir = "/scratch/rykalinav/rki_tsi/"
 // Parameters for shiver
 params.alientrimmer = "${projectDir}/bin/AlienTrimmer.jar"
 params.illumina_adapters = "${projectDir}/data/adapters_Illumina.fasta"
-params.config = "${projectDir}/bin/config.sh"
+params.config_se = "${projectDir}/bin/config_se.sh"
+params.config_pe = "${projectDir}/bin/config_pe.sh"
 params.remove_whitespace = "${projectDir}/bin/tools/RemoveTrailingWhitespace.py"
 params.alignment = "${projectDir}/data/HIV1_COM_2022_genome_DNA.fasta"
 
@@ -141,14 +142,14 @@ process EXTRACT {
  
     
     output:
-        tuple val(id), path("${id}_filtered.R*.fastq")
+        tuple val(id), path("${id}_kraken.R*.fastq")
     
     script:
-        set_paired_reads = params.mode == 'single' ? '' : "-2 ${reads[1]} -o2 ${id}_filtered.R2.fastq"
+        set_paired_reads = params.mode == 'single' ? '' : "-2 ${reads[1]} -o2 ${id}_kraken.R2.fastq"
            """
             extract_kraken_reads.py \
                 -1 ${reads[0]} \
-                -o ${id}_filtered.R1.fastq \
+                -o ${id}_kraken.R1.fastq \
                 ${set_paired_reads} \
                 -k ${kraken_output} \
                 --report ${kraken_report} \
@@ -469,19 +470,30 @@ process SHIVER_INIT {
      path "InitDir/IndividualRefs/*.fasta", emit: IndividualRefs
   script:
   
+  if (params.mode == "paired") {
   """
   shiver_init.sh \
     InitDir \
-    ${params.config} \
+    ${params.config_pe} \
     ${alignment} \
     ${params.illumina_adapters} \
     ${primers}
   """  
+  } else if (params.mode == "single") {
+
+  """
+  shiver_init.sh \
+    InitDir \
+    ${params.config_se} \
+    ${alignment} \
+    ${params.illumina_adapters} \
+    ${primers}
+  """ 
+  }
 }
 
 
 process FASTQ_RENAME_HEADER {
-  //conda "${projectDir}/env/shiver.yml"
   publishDir "${params.outdir}/17_renamed_reads", mode: "copy", overwrite: true
   debug true
 
@@ -595,6 +607,7 @@ process BEST_ALIGNMENT {
 
 
 process SHIVER_ALIGN {
+  label "shive_align"
   conda "${projectDir}/env/shiver.yml"
   publishDir "${params.outdir}/21_alignments/${id}", mode: "copy", overwrite: true
   //debug true
@@ -607,11 +620,11 @@ process SHIVER_ALIGN {
     tuple val("${id}"), path("${id}_wRefs.fasta"), path("${id}.blast")
 
   script:
-    if ( contigs.size() > 0 ) {
+    if ( contigs.size() > 0  &&  params.mode == "paired") {
     """
     shiver_align_contigs.sh \
       ${initdir} \
-      ${params.config} \
+      ${params.config_pe} \
       ${contigs} \
       ${id}
 
@@ -619,17 +632,113 @@ process SHIVER_ALIGN {
     rm *_MergedHits.blast*
     mv ${id}_cut_wRefs.fasta ${id}_wRefs.fasta || mv ${id}_raw_wRefs.fasta ${id}_wRefs.fasta 
     """
-  } else {
+  } else if ( contigs.size() > 0  &&  params.mode == "single") {
+     """
+    shiver_align_contigs.sh \
+      ${initdir} \
+      ${params.config_se} \
+      ${contigs} \
+      ${id}
+
+    rm temp_*
+    rm *_MergedHits.blast*
+    mv ${id}_cut_wRefs.fasta ${id}_wRefs.fasta || mv ${id}_raw_wRefs.fasta ${id}_wRefs.fasta 
+    """
+
+   } else {
     """
      printf "There is no contig for sample with ID: ${id}"
      touch ${id}.blast
      touch ${id}_wRefs.fasta
     """
-  }
+   }
 }
 
 
+process SHIVER_MAP {
+  conda "${projectDir}/env/shiver.yml"
+  publishDir "${params.outdir}/22_mapped/${id}", mode: "copy", overwrite: true
+  //debug true
 
+  input:
+    path initdir
+    tuple val(id), path(kallistoRef), path(contigs), path(shiverRef), path(blast)
+    tuple val(id), path(reads)
+   
+  
+  output:
+    tuple val("${id}"), path("${id}*ref.fasta"), path("${id}*.bam"), path("${id}*.bam.bai"), path("${id}*WithHXB2.csv")
+    
+  script:
+    if ( shiverRef.size() > 0 && params.mode == "paired") {
+    """
+    shiver_map_reads.sh \
+        ${initdir} \
+        ${params.config_pe} \
+        ${contigs} \
+        ${id} \
+        ${blast} \
+        ${shiverRef} \
+        ${reads[0]} \
+        ${reads[1]}
+
+    rm temp_* 
+    rm *PreDedup.bam
+    
+    """ 
+   } else if ( shiverRef.size() > 0 && params.mode == "single") {
+    """
+      shiver_map_reads.sh \
+        ${initdir} \
+        ${params.config_se} \
+        ${contigs} \
+        ${id} \
+        ${blast} \
+        ${shiverRef} \
+        ${reads[0]} \
+    
+    rm temp_* 
+    rm *PreDedup.bam
+    
+    """ 
+    } else if ( shiverRef.size() >= 0 && params.mode == "paired") {
+     """
+    touch ${id}.blast
+    touch ${id}_merged_contigs.fasta
+
+    shiver_map_reads.sh \
+        ${initdir} \
+        ${params.config_pe} \
+        ${id}_contigs.fasta \
+        ${id} \
+        ${id}.blast\
+        ${kallistoRef} \
+        ${reads[0]} \
+        ${reads[1]}
+
+    rm temp_* 
+    rm *PreDedup.bam
+     """
+  } else if ( shiverRef.size() >= 0 && params.mode == "single") {
+    """
+    touch ${id}.blast
+    touch ${id}_merged_contigs.fasta
+
+    shiver_map_reads.sh \
+        ${initdir} \
+        ${params.config_se} \
+        ${id}_contigs.fasta \
+        ${id} \
+        ${id}.blast\
+        ${kallistoRef} \
+        ${reads[0]} \
+        ${reads[1]}
+
+    rm temp_* 
+    rm *PreDedup.bam
+    """
+  }
+}
 
 
 // **************************************INPUT CHANNELS***************************************************
@@ -667,10 +776,11 @@ workflow {
     ch_multiqc = MULTIQC ( ch_raw_fastqc.Zip.concat(ch_fastp_fastqc.Zip).concat(ch_alientrimmer_fastqc.Zip).concat(ch_kraken_fastqc.Zip).collect() )
     ch_spades = SPADES ( ch_primer_trimmed )
     ch_metaspades = METASPADES ( ch_primer_trimmed )
+    // Combine according to a key that is the first value of every first element, which is a list
     ch_spades_combined = ch_spades.SpadesContigs.combine( ch_metaspades.MetaspadesContigs, by:0 )
     ch_merged_contigs = MERGE_CONTIGS ( ch_spades_combined )
     ch_cd_hit_est = CD_HIT_EST ( ch_merged_contigs )
-    ch_fastq_renamed_header = FASTQ_RENAME_HEADER ( ch_merged_reads )
+    ch_fastq_renamed_header = FASTQ_RENAME_HEADER (  ch_primer_trimmed )
     ch_initdir = SHIVER_INIT ( params.alignment, primers )
     ch_kallisto_index = KALLISTO_INDEX ( ch_initdir.ExistingRefsUngapped )
     ch_kallisto_index_reads = ch_kallisto_index.combine( ch_fastq_renamed_header )
@@ -679,6 +789,9 @@ workflow {
     ch_wref = SHIVER_ALIGN ( ch_initdir.InitDir, ch_merged_contigs )
     // Combine according to a key that is the first value of every first element, which is a list
     ch_map_args = ch_best_ref.combine(ch_merged_contigs, by:0).combine(ch_wref, by:0).combine(ch_fastq_renamed_header, by:0).view()
+    ch_map_args_non_reads = ch_map_args.map {id, bestref, contigs, shiverref, blast, reads  -> tuple (id, bestref, contigs, shiverref, blast)}.view()
+    ch_map_args_reads = ch_map_args.map {id, bestref, contigs, shiverref, blast, reads  -> tuple (id, reads)}.view()
+    ch_map_out = SHIVER_MAP ( ch_initdir.InitDir, ch_map_args_non_reads, ch_map_args_reads )
 }
 
 
