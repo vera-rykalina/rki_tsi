@@ -6,6 +6,7 @@ dependencies:
   - python=3.6
   - bzip2
   - mafft
+  - trimmomatic
   - smalt=0.7.6
   - picard=2.18
   - bwa
@@ -18,3 +19,4 @@ dependencies:
   - pip:
     - pyfastaq
     - six
+    - pandas
