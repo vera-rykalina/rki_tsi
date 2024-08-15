@@ -20,16 +20,15 @@ projectDir = "/scratch/rykalinav/rki_tsi/"
 
 // Parameters for shiver
 params.alientrimmer = "${projectDir}/bin/AlienTrimmer.jar"
-params.illumina_adapters = "${projectDir}/data/adapters_Illumina.fasta"
+params.illumina_adapters = "${projectDir}/data/adapters/adapters_Illumina.fasta"
 params.config_se = "${projectDir}/bin/config_se.sh"
 params.config_pe = "${projectDir}/bin/config_pe.sh"
-params.remove_whitespace = "${projectDir}/bin/tools/RemoveTrailingWhitespace.py"
-params.alignment = "${projectDir}/data/HIV1_COM_2022_genome_DNA.fasta"
+params.alignment = "${projectDir}/data/aligments/HIV1_COM_2022_genome_DNA.fasta"
 
 
 primers = params.primers
 //alignment = params.alignment
-//params.gal_primers = "${projectDir}/data/primers_GallEtAl2012.fasta"
+//params.gal_primers = "${projectDir}/data/primers/primers_GallEtAl2012.fasta"
 
 // Parameters for kraken
 krakendb = params.krakendb
@@ -280,7 +279,10 @@ process ALIENTRIMMER {
        -o ${id}_alientrimmer.R \
        -k 15 \
        -z
+
+  rm -f ${id}_alientrimmer.R.S.fastq.gz
   """
+  
   } else if (params.mode == "single") {
     """
       java -jar ${params.alientrimmer} \
@@ -607,7 +609,7 @@ process BEST_ALIGNMENT {
 
 
 process SHIVER_ALIGN {
-  label "shive_align"
+  label "shiver"
   conda "${projectDir}/env/shiver.yml"
   publishDir "${params.outdir}/21_alignments/${id}", mode: "copy", overwrite: true
   //debug true
@@ -656,6 +658,7 @@ process SHIVER_ALIGN {
 
 
 process SHIVER_MAP {
+  label "shiver"
   conda "${projectDir}/env/shiver.yml"
   publishDir "${params.outdir}/22_mapped/${id}", mode: "copy", overwrite: true
   //debug true
@@ -741,7 +744,81 @@ process SHIVER_MAP {
 }
 
 
-// **************************************INPUT CHANNELS***************************************************
+process MAF {
+ conda "${projectDir}/env/tsi-python.yml"
+ publishDir "${params.outdir}/23_maf", mode: "copy", overwrite: true
+ //debug true
+
+ input:
+  tuple val(id), path(ref), path(bam), path(bai), path(basefreqs)
+    
+ output:
+  path "${id}.csv"
+    
+ script:
+  if (basefreqs instanceof List) {
+  """
+  produce_maf.py ${basefreqs[1]} ${id}.csv
+  """ 
+  } else {
+  """
+  produce_maf.py ${basefreqs} ${id}.csv
+  """
+   }
+}
+
+process JOIN_MAFS {
+  conda "${projectDir}/env/tsi-python.yml"
+  publishDir "${params.outdir}/24_joined_maf", mode: "copy", overwrite: true
+  //debug true
+
+  input:
+    path mafcsv
+    
+  output:
+    path "*.csv"
+    
+  script:
+    """
+    join_mafs.py ${mafcsv}
+    """ 
+  }
+
+
+// PHYLOSCANNER PART
+
+process BAM_REF_ID_CSV {
+  publishDir "${params.outdir}/25_ref_bam_id", mode: "copy", overwrite: true
+  //debug true
+
+  input:
+    tuple val(id), path(ref), path(bam), path(bai), path(basefreqs)
+    
+  output:
+    path "*_bam_ref_id.csv"
+  
+  script:
+    if (bam instanceof List) {
+    """
+    for bamfile in *_remap.bam; do
+      echo ${id}_remap.bam,${id}_remap_ref.fasta,${id}
+    done > ${id}_bam_ref_id.csv
+    """ 
+  } else {
+     """
+    for bamfile in *.bam; do
+      echo ${id}.bam,${id}_ref.fasta,${id}  
+    done > ${id}_bam_ref_id.csv
+     """
+  }
+}
+
+
+
+// ****************************************************INPUT CHANNELS**********************************************************
+ch_ref_hxb2 = Channel.fromPath("${projectDir}/data/refs/HXB2_refdata.csv", checkIfExists: true)
+
+
 if ( !params.fastq ) {
     exit 1, "input missing, use [--fastq]"
 }
@@ -764,6 +841,7 @@ if (params.mode == 'paired') {
 
 
 workflow {
+   // ***********************************************************QC*********************************************************************
     ch_raw_fastqc = RAW_FASTQC ( ch_input_fastq )
     ch_classified_reads = CLASSIFY ( ch_input_fastq, krakendb )
     ch_filtered_reads = EXTRACT ( ch_classified_reads.ClassifiedFastq, ch_classified_reads.KrakenOutput, ch_classified_reads.KrakenReport, params.taxid )
@@ -780,7 +858,8 @@ workflow {
     ch_spades_combined = ch_spades.SpadesContigs.combine( ch_metaspades.MetaspadesContigs, by:0 )
     ch_merged_contigs = MERGE_CONTIGS ( ch_spades_combined )
     ch_cd_hit_est = CD_HIT_EST ( ch_merged_contigs )
-    ch_fastq_renamed_header = FASTQ_RENAME_HEADER (  ch_primer_trimmed )
+    ch_fastq_renamed_header = FASTQ_RENAME_HEADER ( ch_primer_trimmed )
+     // ******************************************************SHIVER*********************************************************************
     ch_initdir = SHIVER_INIT ( params.alignment, primers )
     ch_kallisto_index = KALLISTO_INDEX ( ch_initdir.ExistingRefsUngapped )
     ch_kallisto_index_reads = ch_kallisto_index.combine( ch_fastq_renamed_header )
@@ -788,10 +867,14 @@ workflow {
     ch_best_ref = BEST_ALIGNMENT ( ch_initdir.IndividualRefs, ch_kallisto_quant )
     ch_wref = SHIVER_ALIGN ( ch_initdir.InitDir, ch_merged_contigs )
     // Combine according to a key that is the first value of every first element, which is a list
-    ch_map_args = ch_best_ref.combine(ch_merged_contigs, by:0).combine(ch_wref, by:0).combine(ch_fastq_renamed_header, by:0).view()
-    ch_map_args_non_reads = ch_map_args.map {id, bestref, contigs, shiverref, blast, reads  -> tuple (id, bestref, contigs, shiverref, blast)}.view()
-    ch_map_args_reads = ch_map_args.map {id, bestref, contigs, shiverref, blast, reads  -> tuple (id, reads)}.view()
-    ch_map_out = SHIVER_MAP ( ch_initdir.InitDir, ch_map_args_non_reads, ch_map_args_reads )
+    ch_mapping_args = ch_best_ref.combine(ch_merged_contigs, by:0).combine(ch_wref, by:0).combine(ch_fastq_renamed_header, by:0)
+    ch_mapping_args_non_reads = ch_mapping_args.map {id, bestref, contigs, shiverref, blast, reads  -> tuple (id, bestref, contigs, shiverref, blast)}.view()
+    ch_mapping_args_reads = ch_mapping_args.map {id, bestref, contigs, shiverref, blast, reads  -> tuple (id, reads)}.view()
+    ch_mapping_out = SHIVER_MAP ( ch_initdir.InitDir, ch_mapping_args_non_reads, ch_mapping_args_reads )
+     // *********************************************************MAF*********************************************************************
+    ch_maf_out = MAF ( ch_mapping_out )
+    ch_hxb2_maf = ch_ref_hxb2.combine(ch_maf_out.collect())
+    ch_joined_maf = JOIN_MAFS ( ch_hxb2_maf )
 }
 
 
@@ -800,3 +883,10 @@ workflow {
 //07-00462_fastp_trimmed.R2.fastq.gz../../../DataShiverInit/primers_GallEtAl2012.fasta --revcomp
 
 // cd-hit-est -i reads.fa -o output.fa -c 0.9 -n 10 -d 999
+
+/*
+-c <infile>
+This option allows the alien sequence file to be indicated. Each alien oligonucleotide sequence must be
+written in one line, and may not exceed 32,500 nucleotides. Standard degenerate bases are admitted, i.e.
+character states M, R, W, S, Y, K, B, D, H, V, N, and X. Lines beginning by the characters ‘#’, ‘%’ or
+‘>’ are not considered. Input file name may not be a number (see last page). */
