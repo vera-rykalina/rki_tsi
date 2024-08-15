@@ -1,0 +1,14 @@
+channels:
+  - anaconda
+  - conda-forge
+  - bioconda
+  - pypi
+  - defaults
+dependencies:
+  - python=3.10
+  - pandas
+  - matplotlib
+  - seaborn
+  - pip
+  - pip:
+    - regex-rename
