@@ -1,0 +1,14 @@
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+  - pypi
+dependencies:
+  - python=2.7
+  - mafft=7.407
+  - biopython=1.76
+  - samtools
+  - raxml
+  - pysam
+  - matplotlib
+  - iqtree
