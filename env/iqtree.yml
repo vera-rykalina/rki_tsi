@@ -1,0 +1,7 @@
+channels:
+  - conda-forge
+  - bioconda
+  - pypi
+  - defaults
+dependencies:
+  - iqtree
