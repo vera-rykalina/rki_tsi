@@ -8,5 +8,6 @@ output/
 output_pe/
 output_se/
 single_reads/
+paired_reads/
 shiver/
 phyloscanner/
