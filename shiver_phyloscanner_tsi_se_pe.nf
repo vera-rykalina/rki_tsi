@@ -972,7 +972,7 @@ process PHYLOSCANNER_NORMALISATION {
   script:
    
     """
-    CalculateTreeSizeInGenomeWindows.py \
+    python ${normalisation} \
     ${alignment} \
     B.FR.83.HXB2_LAI_IIIB_BRU.K03455 \
     500 \
@@ -1017,6 +1017,7 @@ params.k = 15
 // Parameters for HIV-PhyloTSI
 params.model = "${projectDir}/bin/Model"
 
+params.normalisation = "${projectDir}/bin/tools/CalculateTreeSizeInGenomeWindows.py"
 
 // ****************************************************INPUT CHANNELS**********************************************************
 ch_ref_hxb2 = Channel.fromPath("${projectDir}/data/refs/HXB2_refdata.csv", checkIfExists: true)
