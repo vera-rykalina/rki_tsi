@@ -972,7 +972,7 @@ process PHYLOSCANNER_NORMALISATION {
   script:
    
     """
-    python ${normalisation} \
+    python ${params.normalisation} \
     ${alignment} \
     B.FR.83.HXB2_LAI_IIIB_BRU.K03455 \
     500 \
