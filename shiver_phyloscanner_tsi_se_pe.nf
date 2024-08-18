@@ -957,6 +957,34 @@ process MAPPING_NOTES {
   }
 }
 
+
+process PHYLOSCANNER_NORMALISATION {
+  label "normalisation"
+  conda "${projectDir}/env/phyloscanner.yml"
+  debug true
+
+  input:
+    path (alignment)
+    
+  output:
+    path "*.csv"
+  
+  script:
+   
+    """
+    CalculateTreeSizeInGenomeWindows.py \
+    ${alignment} \
+    B.FR.83.HXB2_LAI_IIIB_BRU.K03455 \
+    500 \
+    251 \
+    HIV_COM_2022_genome_DNA_SizeInWindows \
+    --x-iqtree "${iqtreeargs}" \
+    --end 9460 \
+    -T ${task.cpus} \
+    -I 10
+    """
+  
+}
 //**************************************************PARAMETERS*******************************************************
 // Change is required! Specify your projectDir here
 projectDir = "/scratch/rykalinav/rki_tsi"
@@ -1064,6 +1092,9 @@ workflow {
      // Mapping notes
     ch_mapping_notes = MAPPING_NOTES( ch_mapping_args_non_reads )
     ch_mapping_notes_all = ch_mapping_notes.collectFile(name: "mapping_report.csv", storeDir: "${projectDir}/${params.outdir}/31_phylo_tsi")
+
+    // Normalisation for phyloscanner (for option --normRefFileName)
+    ch_ref_normalisation = PHYLOSCANNER_NORMALISATION ( params.alignment ) 
 }
 
 
