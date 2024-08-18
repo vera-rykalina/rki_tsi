@@ -1086,7 +1086,7 @@ workflow {
     ch_aligned_reads = PHYLOSCANNER_ALIGN_READS ( ch_bam_ref_id_all, ch_mapped_out_no_id.flatten().collect() )
     ch_aligned_reads_positions_excised = ch_aligned_reads.AlignedReads.flatten().filter(~/.*PositionsExcised.*/)
     ch_iqtree = IQTREE ( ch_aligned_reads_positions_excised )
-    ch_analysed_trees = PHYLOSCANNER_CSV ( ch_iqtree.treefile.collect() )
+    ch_analysed_trees = PHYLOSCANNER_TREE_ANALYSIS ( ch_iqtree.treefile.collect() )
     ch_phylo_tsi = PHYLO_TSI( ch_analysed_trees.patstat_csv, ch_joined_maf )
     ch_prettified_tsi = PRETTIFY_AND_PLOT( ch_phylo_tsi )
      // Mapping notes
