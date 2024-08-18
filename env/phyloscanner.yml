@@ -12,3 +12,7 @@ dependencies:
   - pysam
   - matplotlib
   - iqtree
+  - raxml-ng
+  
+  
+
