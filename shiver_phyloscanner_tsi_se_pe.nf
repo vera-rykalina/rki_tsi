@@ -10,12 +10,17 @@ nextflow.enable.dsl = 2
 --krakendb /scratch/databases/kraken2_nt_20231129/ \
 --mode paired 
 --alignment /scratch/rykalinav/rki_tsi/data/HIV1_COM_2022_genome_DNA.fasta \
---primers /scratch/rykalinav/rki_tsi/data/primers_GallEtAl2012.fasta \
+--primers /scratch/rykalinav/rki_tsi/data/primers/primers_GallEtAl2012.fasta \
 -resume
 */
 
 // Change is required! Specify your projectDir here
-projectDir = "/scratch/rykalinav/rki_tsi/"
+projectDir = "/scratch/rykalinav/rki_tsi"
+
+// Parameters for kraken
+krakendb = params.krakendb
+// taxid of HIV-1 
+params.taxid = "11676"
 
 
 // Parameters for shiver
@@ -23,17 +28,19 @@ params.alientrimmer = "${projectDir}/bin/AlienTrimmer.jar"
 params.illumina_adapters = "${projectDir}/data/adapters/adapters_Illumina.fasta"
 params.config_se = "${projectDir}/bin/config_se.sh"
 params.config_pe = "${projectDir}/bin/config_pe.sh"
-params.alignment = "${projectDir}/data/aligments/HIV1_COM_2022_genome_DNA.fasta"
-
-
+params.alignment = "${projectDir}/data/alignments/HIV1_COM_2022_genome_DNA.fasta"
 primers = params.primers
-//alignment = params.alignment
-//params.gal_primers = "${projectDir}/data/primers/primers_GallEtAl2012.fasta"
 
-// Parameters for kraken
-krakendb = params.krakendb
-// taxid of HIV-1 
-params.taxid = "11676"
+
+
+// Parameters for phyloscanner
+params.raxmlargs = "raxmlHPC-SSE3 -m GTRCAT -p 1 --no-seq-check"
+params.iqtreeargs = "iqtree -m GTR+F+R6 --seed 1"
+params.two_refs = "${projectDir}/data/refs/2refs_HXB2_C.BW.fasta"
+params.excision_coordinates = "${projectDir}/data/phyloscanner/DrugResistancePositionsInHXB2.txt"
+params.windows_oneline = "${projectDir}/data/phyloscanner/windows250_VR_norms_oneline.txt"
+params.hiv_distance_normalisation = "${projectDir}/data/phyloscanner/HIV_DistanceNormalisationOverGenome.csv"
+params.k = 15
 
 
 log.info """
@@ -141,14 +148,14 @@ process EXTRACT {
  
     
     output:
-        tuple val(id), path("${id}_kraken.R*.fastq")
+        tuple val(id), path("${id}_filtered.R*.fastq")
     
     script:
-        set_paired_reads = params.mode == 'single' ? '' : "-2 ${reads[1]} -o2 ${id}_kraken.R2.fastq"
+        set_paired_reads = params.mode == 'single' ? '' : "-2 ${reads[1]} -o2 ${id}_filtered.R2.fastq"
            """
             extract_kraken_reads.py \
                 -1 ${reads[0]} \
-                -o ${id}_kraken.R1.fastq \
+                -o ${id}_filtered.R1.fastq \
                 ${set_paired_reads} \
                 -k ${kraken_output} \
                 --report ${kraken_report} \
@@ -167,17 +174,17 @@ process MERGE {
         tuple val(id), path(unclassified), path(filtered)
 
     output:
-        tuple val("${id}"), path("${id}_filtered.R*.fastq.gz")
+        tuple val("${id}"), path("${id}_kraken.R*.fastq.gz")
 
     script:
     if (params.mode == "paired") {
         """
-        gzip -c ${unclassified[0]} ${filtered[0]} > ${id}_filtered.R1.fastq.gz
-        gzip -c ${unclassified[1]} ${filtered[1]} > ${id}_filtered.R2.fastq.gz
+        gzip -c ${unclassified[0]} ${filtered[0]} > ${id}_kraken.R1.fastq.gz
+        gzip -c ${unclassified[1]} ${filtered[1]} > ${id}_kraken.R2.fastq.gz
         """
     } else if (params.mode == "single") {
        """
-       gzip -c ${unclassified[0]} ${filtered[0]} > ${id}_filtered.R1.fastq.gz
+       gzip -c ${unclassified[0]} ${filtered[0]} > ${id}_kraken.R1.fastq.gz
        """
     }
 }
@@ -814,7 +821,67 @@ process BAM_REF_ID_CSV {
 }
 
 
+process PHYLOSCANNER_ALIGN_READS {
+ label "phyloscanner_align_reads"
+ conda "${projectDir}/env/phyloscanner.yml"
+ publishDir "${params.outdir}/27_phyloscanner_aligned_reads", mode: "copy", overwrite: true 
+ debug true
 
+ input:
+  path bam_ref_id_csv, name: "phyloscanner_input.csv"
+  path bam_fasta_bai_files
+
+ output:
+  path "AlignedReads/*.fasta", emit: AlignedReads
+  path "Consensuses/*.fasta", emit: Consensuses
+  path "ReadNames/*.csv.gz", emit: ReadsNames
+  path "*.csv", emit: WindowCoordinateCorrespondence
+
+
+ script:
+  set_paired = params.mode == 'paired' ? '--merge-paired-reads' : ''
+  // remove 9470,9720,9480,9730,9490,9740 from windows
+ """
+  phyloscanner_make_trees.py \
+       ${bam_ref_id_csv} \
+       ${set_paired} \
+       --quality-trim-ends 25 \
+       --alignment-of-other-refs ${params.two_refs} \
+       --pairwise-align-to B.FR.83.HXB2_LAI_IIIB_BRU.K03455 \
+       --excision-ref B.FR.83.HXB2_LAI_IIIB_BRU.K03455 \
+       --excision-coords \$(cat ${params.excision_coordinates}) \
+       --dont-check-duplicates \
+       --read-names-only \
+       --merging-threshold-a 0 \
+       --min-read-count 1 \
+       --windows \$(cat ${params.windows_oneline})
+ 
+ """ 
+}
+
+process IQTREE {
+  label "iqtree"
+  conda "${projectDir}/env/iqtree.yml"
+  publishDir "${params.outdir}/28_iqtree_trees", mode: "copy", overwrite: true
+  //debug true
+
+ input:
+  path fasta
+
+ output:
+  path "*.treefile", emit: treefile
+  path "*.log", emit: iqtreelog
+ 
+ script:
+ """
+  iqtree \
+     -s ${fasta} \
+     -pre IQTREE_bestTree.InWindow_${fasta.getSimpleName().split("Excised_")[1]} \
+     -m GTR+F+R6 \
+     -nt ${task.cpus} \
+     --seed 1
+ """ 
+}
 // ****************************************************INPUT CHANNELS**********************************************************
 ch_ref_hxb2 = Channel.fromPath("${projectDir}/data/refs/HXB2_refdata.csv", checkIfExists: true)
 
@@ -875,8 +942,15 @@ workflow {
     ch_maf_out = MAF ( ch_mapping_out )
     ch_hxb2_maf = ch_ref_hxb2.combine(ch_maf_out.collect())
     ch_joined_maf = JOIN_MAFS ( ch_hxb2_maf )
+    // *******************************************************PHYLOSCANNER******'*****************************************************************
+    ch_phyloscanner_csv = BAM_REF_ID_CSV ( ch_mapping_out )
+    // An easy way to concatinate bam_ref_id_csv files: use collectFile() operator
+    ch_bam_ref_id_all = ch_phyloscanner_csv.collectFile( name: "phloscanner_input.csv", storeDir: "${projectDir}/${params.outdir}/26_bam_ref_id_all" )
+    ch_mapped_out_no_id = ch_mapping_out.map {id, fasta, bam, bai, csv -> [fasta, bam, bai]}
+    ch_aligned_reads = PHYLOSCANNER_ALIGN_READS ( ch_bam_ref_id_all, ch_mapped_out_no_id.flatten().collect() )
+    ch_aligned_reads_positions_excised = ch_aligned_reads.AlignedReads.flatten().filter(~/.*PositionsExcised.*/)
+    ch_iqtree = IQTREE ( ch_aligned_reads_positions_excised )
 }
-
 
 // fastaq primer trimming
 //fastaq sequence_trim 07-00462_fastp.R1.fastq.gz 07-00462_fastp.R2.fastq.gz 07-00462_fastp_trimmed.R1.fastq.gz \
@@ -890,3 +964,15 @@ This option allows the alien sequence file to be indicated. Each alien oligonucl
 written in one line, and may not exceed 32,500 nucleotides. Standard degenerate bases are admitted, i.e.
 character states M, R, W, S, Y, K, B, D, H, V, N, and X. Lines beginning by the characters ‘#’, ‘%’ or
 ‘>’ are not considered. Input file name may not be a number (see last page). */
+
+/*  ./../tools/CalculateTreeSizeInGenomeWindows.py \
+../../data/alignments/HIV1_COM_2022_genome_DNA.fasta \ 
+B.FR.83.HXB2_LAI_IIIB_BRU.K03455 \
+500 \
+250 \
+HIV_COM_2022_genome_DNA_SizeInWindows \
+--x-iqtree "iqtree -m GTR+F+R6 -nt 2 --seed 0" \ 
+--end 9460 \ 
+-T 2 \ 
+-I 10
+*/
