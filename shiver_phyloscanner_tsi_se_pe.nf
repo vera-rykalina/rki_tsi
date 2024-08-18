@@ -978,7 +978,7 @@ process PHYLOSCANNER_NORMALISATION {
     500 \
     251 \
     HIV_COM_2022_genome_DNA_SizeInWindows \
-    --x-iqtree "${iqtreeargs}" \
+    --x-iqtree "${params.iqtreeargs}" \
     --end 9460 \
     -T ${task.cpus} \
     -I 10
