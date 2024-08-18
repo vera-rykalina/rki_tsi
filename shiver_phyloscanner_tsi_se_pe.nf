@@ -14,34 +14,6 @@ nextflow.enable.dsl = 2
 -resume
 */
 
-// Change is required! Specify your projectDir here
-projectDir = "/scratch/rykalinav/rki_tsi"
-
-// Parameters for kraken
-krakendb = params.krakendb
-// taxid of HIV-1 
-params.taxid = "11676"
-
-
-// Parameters for shiver
-params.alientrimmer = "${projectDir}/bin/AlienTrimmer.jar"
-params.illumina_adapters = "${projectDir}/data/adapters/adapters_Illumina.fasta"
-params.config_se = "${projectDir}/bin/config_se.sh"
-params.config_pe = "${projectDir}/bin/config_pe.sh"
-params.alignment = "${projectDir}/data/alignments/HIV1_COM_2022_genome_DNA.fasta"
-primers = params.primers
-
-
-
-// Parameters for phyloscanner
-params.raxmlargs = "raxmlHPC-SSE3 -m GTRCAT -p 1 --no-seq-check"
-params.iqtreeargs = "iqtree -m GTR+F+R6 --seed 1"
-params.two_refs = "${projectDir}/data/refs/2refs_HXB2_C.BW.fasta"
-params.excision_coordinates = "${projectDir}/data/phyloscanner/DrugResistancePositionsInHXB2.txt"
-params.windows_oneline = "${projectDir}/data/phyloscanner/windows250_VR_norms_oneline.txt"
-params.hiv_distance_normalisation = "${projectDir}/data/phyloscanner/HIV_DistanceNormalisationOverGenome.csv"
-params.k = 15
-
 
 log.info """
 ====================================================
@@ -882,6 +854,41 @@ process IQTREE {
      --seed 1
  """ 
 }
+
+
+//**************************************************PARAMETERS*******************************************************
+// Change is required! Specify your projectDir here
+projectDir = "/scratch/rykalinav/rki_tsi"
+
+// Parameters for kraken
+krakendb = params.krakendb
+// taxid of HIV-1 
+params.taxid = "11676"
+
+
+// Parameters for shiver
+params.alientrimmer = "${projectDir}/bin/AlienTrimmer.jar"
+params.illumina_adapters = "${projectDir}/data/adapters/adapters_Illumina.fasta"
+params.config_se = "${projectDir}/bin/config_se.sh"
+params.config_pe = "${projectDir}/bin/config_pe.sh"
+params.alignment = "${projectDir}/data/alignments/HIV1_COM_2022_genome_DNA.fasta"
+primers = params.primers
+
+
+
+// Parameters for phyloscanner
+params.raxmlargs = "raxmlHPC-SSE3 -m GTRCAT -p 1 --no-seq-check"
+params.iqtreeargs = "iqtree -m GTR+F+R6 --seed 1"
+params.two_refs = "${projectDir}/data/refs/2refs_HXB2_C.BW.fasta"
+params.excision_coordinates = "${projectDir}/data/phyloscanner/DrugResistancePositionsInHXB2.txt"
+params.windows_oneline = "${projectDir}/data/phyloscanner/windows250_VR_norms_oneline.txt"
+params.hiv_distance_normalisation = "${projectDir}/data/phyloscanner/HIV_DistanceNormalisationOverGenome.csv"
+params.k = 15
+
+// Parameters for HIV-PhyloTSI
+params.model = "${projectDir}/bin/Model"
+
+
 // ****************************************************INPUT CHANNELS**********************************************************
 ch_ref_hxb2 = Channel.fromPath("${projectDir}/data/refs/HXB2_refdata.csv", checkIfExists: true)
 
