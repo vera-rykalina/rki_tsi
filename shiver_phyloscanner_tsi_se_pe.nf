@@ -856,6 +856,107 @@ process IQTREE {
 }
 
 
+process PHYLOSCANNER_TREE_ANALYSIS {
+ label "phyloscanner_tree_analysis"
+ publishDir "${params.outdir}/29_analysed_trees", mode: "copy", overwrite: true
+ debug true
+
+ input:
+  path treefile
+
+ output:
+   path "*patStats.csv", emit: patstat_csv
+   path "*blacklistReport.csv", emit: blacklist_csv
+   path "*patStats.pdf", emit: patstat_pdf
+   //path "*.rda", emit: rda   
+   //path "*.nex", emit: nex
+
+ script:
+ """
+  phyloscanner_analyse_trees.R \
+    --skipSummaryGraph \
+    --overwrite \
+    --outputRDA \
+    --outputNexusTree \
+    --verbose 1 \
+    --windowThreshold 0.5 \
+    --allowMultiTrans \
+    --directionThreshold 0.33 \
+    --readCountsMatterOnZeroLengthBranches \
+    --blacklistReport \
+    --parsimonyBlacklistK ${params.k} \
+    --ratioBlacklistThreshold 0.005 \
+    --rawBlacklistThreshold 3 \
+    --multifurcationThreshold 1E-5 \
+    --outgroupName B.FR.83.HXB2_LAI_IIIB_BRU.K03455 \
+    --normRefFileName ${params.hiv_distance_normalisation} \
+    --treeFileExtension .treefile IQTREE_bestTree.InWindow "k${params.k}" "s,${params.k}" 
+ """ 
+}
+
+process PHYLO_TSI {
+  conda "${projectDir}/env/phylo_tsi.yml"
+  publishDir "${params.outdir}/30_phylo_tsi", mode: "copy", overwrite: true
+  debug true
+
+  input:
+    path patstat
+    path maf
+    
+  output:
+    path "phylo_tsi.csv"
+  
+  script:
+    """
+    HIVPhyloTSI.py \
+      -d ${params.model} \
+      -p ${patstat} \
+      -m ${maf} \
+      -o phylo_tsi.csv \
+      --amplicons True
+    """ 
+}
+
+process PRETTIFY_AND_PLOT {
+  conda "${projectDir}/env/tsi-python.yml"
+  publishDir "${params.outdir}/31_phylo_tsi", mode: "copy", overwrite: true
+  debug true
+
+  input:
+    path phylo_tsi_csv
+
+  output:
+    path "phylo_tsi_prettified.csv"
+    path "tsi_barplot.png"
+  
+  script:
+    """
+    tsi_prettify_and_plot.py ${phylo_tsi_csv} 
+    """ 
+}
+
+process MAPPING_NOTES {
+  debug true
+
+  input:
+    tuple val(id), path(kallistoRef), path(contigs), path(shiverRef), path(blast)
+    
+  output:
+    path "${id}_mapping_notes.csv"
+  
+  script:
+    if (contigs.size() > 0) {
+    """
+    echo ${id},"Mapped with SPADES and/or METASPADES contigs" > ${id}_mapping_notes.csv
+    """ 
+  } else {
+     """
+    bestref=\$(grep "^>" ${kallistoRef} | sed 's/>//g') 
+    echo ${id},"Mapped with reference: \${bestref}" > ${id}_mapping_notes.csv
+    """
+  }
+}
+
 //**************************************************PARAMETERS*******************************************************
 // Change is required! Specify your projectDir here
 projectDir = "/scratch/rykalinav/rki_tsi"
@@ -957,7 +1058,15 @@ workflow {
     ch_aligned_reads = PHYLOSCANNER_ALIGN_READS ( ch_bam_ref_id_all, ch_mapped_out_no_id.flatten().collect() )
     ch_aligned_reads_positions_excised = ch_aligned_reads.AlignedReads.flatten().filter(~/.*PositionsExcised.*/)
     ch_iqtree = IQTREE ( ch_aligned_reads_positions_excised )
+    ch_analysed_trees = PHYLOSCANNER_CSV ( ch_iqtree.treefile.collect() )
+    ch_phylo_tsi = PHYLO_TSI( ch_analysed_trees.patstat_csv, ch_joined_maf )
+    ch_prettified_tsi = PRETTIFY_AND_PLOT( ch_phylo_tsi )
+     // Mapping notes
+    ch_mapping_notes = MAPPING_NOTES( ch_mapping_args_non_reads )
+    ch_mapping_notes_all = ch_mapping_notes.collectFile(name: "mapping_report.csv", storeDir: "${projectDir}/${params.outdir}/31_phylo_tsi")
 }
+
+
 
 // fastaq primer trimming
 //fastaq sequence_trim 07-00462_fastp.R1.fastq.gz 07-00462_fastp.R2.fastq.gz 07-00462_fastp_trimmed.R1.fastq.gz \
