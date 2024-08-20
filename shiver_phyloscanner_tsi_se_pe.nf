@@ -683,7 +683,7 @@ process SHIVER_MAP {
     rm *PreDedup.bam
     
     """ 
-    } else if ( shiverRef.size() >= 0 && params.mode == "paired") {
+    } else if ( shiverRef.size() <= 0 && params.mode == "paired") {
      """
     touch ${id}.blast
     touch ${id}_merged_contigs.fasta
@@ -701,7 +701,7 @@ process SHIVER_MAP {
     rm temp_* 
     rm *PreDedup.bam
      """
-  } else if ( shiverRef.size() >= 0 && params.mode == "single") {
+  } else if ( shiverRef.size() <= 0 && params.mode == "single") {
     """
     touch ${id}.blast
     touch ${id}_merged_contigs.fasta
@@ -797,7 +797,7 @@ process PHYLOSCANNER_ALIGN_READS {
  label "phyloscanner_align_reads"
  conda "${projectDir}/env/phyloscanner.yml"
  publishDir "${params.outdir}/27_phyloscanner_aligned_reads", mode: "copy", overwrite: true 
- debug true
+ //debug true
 
  input:
   path bam_ref_id_csv, name: "phyloscanner_input.csv"
@@ -859,7 +859,7 @@ process IQTREE {
 process PHYLOSCANNER_TREE_ANALYSIS {
  label "phyloscanner_tree_analysis"
  publishDir "${params.outdir}/29_analysed_trees", mode: "copy", overwrite: true
- debug true
+ //debug true
 
  input:
   path treefile
@@ -897,7 +897,7 @@ process PHYLOSCANNER_TREE_ANALYSIS {
 process PHYLO_TSI {
   conda "${projectDir}/env/phylo_tsi.yml"
   publishDir "${params.outdir}/30_phylo_tsi", mode: "copy", overwrite: true
-  debug true
+  //debug true
 
   input:
     path patstat
