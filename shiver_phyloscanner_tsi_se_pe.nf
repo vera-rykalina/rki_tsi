@@ -919,7 +919,7 @@ process PHYLO_TSI {
 
 process PRETTIFY_AND_PLOT {
   conda "${projectDir}/env/tsi-python.yml"
-  publishDir "${params.outdir}/31_phylo_tsi", mode: "copy", overwrite: true
+  publishDir "${params.outdir}/30_phylo_tsi", mode: "copy", overwrite: true
   debug true
 
   input:
@@ -1092,7 +1092,7 @@ workflow {
     ch_prettified_tsi = PRETTIFY_AND_PLOT( ch_phylo_tsi )
      // Mapping notes
     ch_mapping_notes = MAPPING_NOTES( ch_mapping_args_non_reads )
-    ch_mapping_notes_all = ch_mapping_notes.collectFile(name: "mapping_report.csv", storeDir: "${projectDir}/${params.outdir}/31_phylo_tsi")
+    ch_mapping_notes_all = ch_mapping_notes.collectFile(name: "mapping_report.csv", storeDir: "${projectDir}/${params.outdir}/30_phylo_tsi")
 
     // Normalisation for phyloscanner (for option --normRefFileName)
     ch_ref_normalisation = PHYLOSCANNER_NORMALISATION ( params.alignment ) 
