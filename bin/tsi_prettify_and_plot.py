@@ -24,7 +24,7 @@ df = df.filter(regex = "^host|^RF_", axis = 1)
 
 # Create "Scount" columns based on "host.id" (extract our internal ID, when long IDs are used)
 #df["Scount"] = df["host.id"].str.extract("\w+HIV(\d{2}-\d{5})_\w+", expand = True)
-df.rename(columns={"host.id": "Scount"})
+df["Scount"] = df["host.id"]
 
 # Swap columns to have "Scount" first
 df = df.iloc[:, [-1, 0] + list(range(1, df.shape[1] - 1 ))]
