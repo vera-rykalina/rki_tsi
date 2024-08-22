@@ -810,6 +810,7 @@ process PHYLOSCANNER_ALIGN_READS {
   path "*.csv", emit: WindowCoordinateCorrespondence
 
 
+
  script:
   set_paired = params.mode == 'paired' ? '--merge-paired-reads' : ''
   // remove 9470,9720,9480,9730,9490,9740 from windows
@@ -822,33 +823,62 @@ process PHYLOSCANNER_ALIGN_READS {
        --pairwise-align-to B.FR.83.HXB2_LAI_IIIB_BRU.K03455 \
        --excision-ref B.FR.83.HXB2_LAI_IIIB_BRU.K03455 \
        --excision-coords \$(cat ${params.excision_coordinates}) \
-       --dont-check-duplicates \
-       --read-names-only \
+       --no-trees \
        --merging-threshold-a 0 \
        --min-read-count 1 \
-       --windows \$(cat ${params.windows_oneline})
- 
+       --windows \$(cat ${params.windows_oneline}) 
  """ 
 }
+
+
+
+process ALIGNED_READS_IQTREE {
+  publishDir "${params.outdir}/28_reads_all_windows", mode: "copy", overwrite: true
+  //debug true
+
+  input:
+    tuple val(window), path(aligned_reads)
+  
+  output:
+    tuple val (window), path ("Filtered*.fasta")
+    
+  script:
+  
+    if ( aligned_reads[1] ) {
+
+    """
+    mv ${aligned_reads[0]} Filtered${aligned_reads[0]}
+
+    mv ${aligned_reads[1]} Filtered${aligned_reads[1]}
+    rm Filtered${aligned_reads[0]}
+   
+    """
+    } else {
+      """
+      mv ${aligned_reads[0]} Filtered${aligned_reads[0]}
+      """
+    }
+  }
+
 
 process IQTREE {
   label "iqtree"
   conda "${projectDir}/env/iqtree.yml"
-  publishDir "${params.outdir}/28_iqtree_trees", mode: "copy", overwrite: true
+  publishDir "${params.outdir}/29_iqtree_trees", mode: "copy", overwrite: true
   //debug true
 
  input:
-  path fasta
+  tuple val (window), path (fasta)
 
  output:
-  path "*.treefile", emit: treefile
-  path "*.log", emit: iqtreelog
+  path "*.treefile", emit: Treefile
+  path "*.log", emit: Iqtreelog
  
  script:
  """
   iqtree \
      -s ${fasta} \
-     -pre IQTREE_bestTree.InWindow_${fasta.getSimpleName().split("Excised_")[1]} \
+     -pre IQTREE_bestTree.InWindow_${window} \
      -m GTR+F+R6 \
      -nt ${task.cpus} \
      --seed 1
@@ -858,7 +888,7 @@ process IQTREE {
 
 process PHYLOSCANNER_TREE_ANALYSIS {
  label "phyloscanner_tree_analysis"
- publishDir "${params.outdir}/29_analysed_trees", mode: "copy", overwrite: true
+ publishDir "${params.outdir}/30_analysed_trees", mode: "copy", overwrite: true
  //debug true
 
  input:
@@ -896,7 +926,7 @@ process PHYLOSCANNER_TREE_ANALYSIS {
 
 process PHYLO_TSI {
   conda "${projectDir}/env/phylo_tsi.yml"
-  publishDir "${params.outdir}/30_phylo_tsi", mode: "copy", overwrite: true
+  publishDir "${params.outdir}/31_phylo_tsi", mode: "copy", overwrite: true
   //debug true
 
   input:
@@ -919,7 +949,7 @@ process PHYLO_TSI {
 
 process PRETTIFY_AND_PLOT {
   conda "${projectDir}/env/tsi-python.yml"
-  publishDir "${params.outdir}/30_phylo_tsi", mode: "copy", overwrite: true
+  publishDir "${params.outdir}/31_phylo_tsi", mode: "copy", overwrite: true
   debug true
 
   input:
@@ -983,8 +1013,57 @@ process PHYLOSCANNER_NORMALISATION {
     -T ${task.cpus} \
     -I 10
     """
-  
 }
+process EXTRACT_POSITION_EXCISED_WINDOWS {
+  //publishDir "${params.outdir}/31_position_excised_windows", mode: "copy", overwrite: true
+  //debug true
+
+  input:
+    path (fasta)
+ 
+ 
+    
+  output:
+    path ("windows.txt")
+    
+  
+  script:
+   
+    """
+     for i in AlignedReadsInWindow_PositionsExcised*; do
+       window=\$(basename "\${i%.fasta}" | cut -d '_' -f3- );
+       echo "\${window}";
+     done >> windows.txt
+    """
+}
+process EXTRACT_ALIGNED_READS {
+  //publishDir "${params.outdir}/32_position__non_excised_windows", mode: "copy", overwrite: true
+  //debug true
+
+  input:
+    path (windows)
+    path (fastas)
+    
+  output:
+    path ("Filtered*.fasta")
+    
+  
+  script:
+    """
+
+    for fasta in ${fastas}; do
+    mv \${fasta} Filtered\${fasta};
+    done
+
+  
+    for window in \$(cat ${windows}); do
+    rm FilteredAlignedReadsInWindow_\${window}.fasta;
+    done
+    """
+}
+
+
+
 //**************************************************PARAMETERS*******************************************************
 // Change is required! Specify your projectDir here
 projectDir = "/scratch/rykalinav/rki_tsi"
@@ -1072,8 +1151,8 @@ workflow {
     ch_wref = SHIVER_ALIGN ( ch_initdir.InitDir, ch_merged_contigs )
     // Combine according to a key that is the first value of every first element, which is a list
     ch_mapping_args = ch_best_ref.combine(ch_merged_contigs, by:0).combine(ch_wref, by:0).combine(ch_fastq_renamed_header, by:0)
-    ch_mapping_args_non_reads = ch_mapping_args.map {id, bestref, contigs, shiverref, blast, reads  -> tuple (id, bestref, contigs, shiverref, blast)}.view()
-    ch_mapping_args_reads = ch_mapping_args.map {id, bestref, contigs, shiverref, blast, reads  -> tuple (id, reads)}.view()
+    ch_mapping_args_non_reads = ch_mapping_args.map {id, bestref, contigs, shiverref, blast, reads  -> tuple (id, bestref, contigs, shiverref, blast)}
+    ch_mapping_args_reads = ch_mapping_args.map {id, bestref, contigs, shiverref, blast, reads  -> tuple (id, reads)}
     ch_mapping_out = SHIVER_MAP ( ch_initdir.InitDir, ch_mapping_args_non_reads, ch_mapping_args_reads )
      // *********************************************************MAF*********************************************************************
     ch_maf_out = MAF ( ch_mapping_out )
@@ -1085,18 +1164,38 @@ workflow {
     ch_bam_ref_id_all = ch_phyloscanner_csv.collectFile( name: "phloscanner_input.csv", storeDir: "${projectDir}/${params.outdir}/26_bam_ref_id_all" )
     ch_mapped_out_no_id = ch_mapping_out.map {id, fasta, bam, bai, csv -> [fasta, bam, bai]}
     ch_aligned_reads = PHYLOSCANNER_ALIGN_READS ( ch_bam_ref_id_all, ch_mapped_out_no_id.flatten().collect() )
+
+    // Combine aligned by phyloscanner reads
+    ch_all_aligned_reads = ch_aligned_reads.AlignedReads.flatten().filter(~/^(.(?!(PositionsExcised)))*$/)
     ch_aligned_reads_positions_excised = ch_aligned_reads.AlignedReads.flatten().filter(~/.*PositionsExcised.*/)
-    ch_iqtree = IQTREE ( ch_aligned_reads_positions_excised )
-    ch_analysed_trees = PHYLOSCANNER_TREE_ANALYSIS ( ch_iqtree.treefile.collect() )
+
+    ch_window_all_reads = ch_all_aligned_reads
+        .map {it -> tuple (it.getSimpleName().split("InWindow_")[1], it ) }
+
+    ch_window_pos_exc_reads = ch_aligned_reads_positions_excised
+        .map { it -> tuple (it.getSimpleName().split("_PositionsExcised_")[1], it) }
+    
+    ch_grouped_aligned_reads = ch_window_all_reads.concat(ch_window_pos_exc_reads)
+        .groupTuple(remainder: true)
+
+    ch_aligned_reads_iqtree = ALIGNED_READS_IQTREE ( ch_grouped_aligned_reads )
+    ch_iqtree = IQTREE ( ch_aligned_reads_iqtree  )
+    ch_analysed_trees = PHYLOSCANNER_TREE_ANALYSIS ( ch_iqtree.Treefile.collect() )
+    // HIVPhyloTSI
     ch_phylo_tsi = PHYLO_TSI( ch_analysed_trees.patstat_csv, ch_joined_maf )
     ch_prettified_tsi = PRETTIFY_AND_PLOT( ch_phylo_tsi )
      // Mapping notes
     ch_mapping_notes = MAPPING_NOTES( ch_mapping_args_non_reads )
     ch_mapping_notes_all = ch_mapping_notes.collectFile(name: "mapping_report.csv", storeDir: "${projectDir}/${params.outdir}/30_phylo_tsi")
 
+    // Under development or alternative
+    //ch_all_windows = EXTRACT_POSITION_EXCISED_WINDOWS ( ch_aligned_reads_positions_excised.collect() )
+    //ch_filtered_aligned_reads = EXTRACT_ALIGNED_READS ( ch_all_windows, ch_all_aligned_reads.collect())
     // Normalisation for phyloscanner (for option --normRefFileName)
-    ch_ref_normalisation = PHYLOSCANNER_NORMALISATION ( params.alignment ) 
+    //ch_ref_normalisation = PHYLOSCANNER_NORMALISATION ( params.alignment ) 
 }
+
+
 
 
 
@@ -1123,4 +1222,16 @@ HIV_COM_2022_genome_DNA_SizeInWindows \
 --end 9460 \ 
 -T 2 \ 
 -I 10
+*/
+
+
+/*
+
+  for file in AlignedReadsInWindow_*_to_*; do
+     window="${all_windows.getSimpleName().split("InWindow_")[1]}";
+     if [[ AlignedReadsInWindow_PositionsExcised_\${window}.fasta ]]
+     then 
+         rm AlignedReadsInWindow_\${window}.fasta
+     fi
+    done 
 */
