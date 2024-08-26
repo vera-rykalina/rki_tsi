@@ -151,12 +151,12 @@ process MERGE {
     script:
     if (params.mode == "paired") {
         """
-        gzip -c ${unclassified[0]} ${filtered[0]} > ${id}_kraken.R1.fastq.gz
-        gzip -c ${unclassified[1]} ${filtered[1]} > ${id}_kraken.R2.fastq.gz
+        cat ${unclassified[0]} ${filtered[0]} | gzip -c > ${id}_kraken.R1.fastq.gz
+        cat ${unclassified[1]} ${filtered[1]} | gzip -c > ${id}_kraken.R2.fastq.gz
         """
     } else if (params.mode == "single") {
        """
-       gzip -c ${unclassified[0]} ${filtered[0]} > ${id}_kraken.R1.fastq.gz
+       cat ${unclassified[0]} ${filtered[0]} | gzip -c > ${id}_kraken.R1.fastq.gz
        """
     }
 }
@@ -1185,7 +1185,7 @@ workflow {
     ch_prettified_tsi = PRETTIFY_AND_PLOT( ch_phylo_tsi )
      // Mapping notes
     ch_mapping_notes = MAPPING_NOTES( ch_mapping_args_non_reads )
-    ch_mapping_notes_all = ch_mapping_notes.collectFile(name: "mapping_report.csv", storeDir: "${projectDir}/${params.outdir}/30_phylo_tsi")
+    ch_mapping_notes_all = ch_mapping_notes.collectFile(name: "mapping_report.csv", storeDir: "${projectDir}/${params.outdir}/31_phylo_tsi")
 
     // Under development or alternative
     //ch_all_windows = EXTRACT_POSITION_EXCISED_WINDOWS ( ch_aligned_reads_positions_excised.collect() )
