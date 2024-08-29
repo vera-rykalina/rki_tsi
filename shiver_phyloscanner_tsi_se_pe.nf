@@ -991,6 +991,8 @@ process MAPPING_NOTES {
 process PHYLOSCANNER_NORMALISATION {
   label "normalisation"
   conda "${projectDir}/env/phyloscanner.yml"
+  publishDir "${params.outdir}/32_normalisation", mode: "copy", overwrite: true
+  debug true
   debug true
 
   input:
@@ -1005,7 +1007,7 @@ process PHYLOSCANNER_NORMALISATION {
     python ${params.normalisation} \
     ${alignment} \
     B.FR.83.HXB2_LAI_IIIB_BRU.K03455 \
-    500 \
+    520 \
     251 \
     HIV_COM_2022_genome_DNA_SizeInWindows \
     --x-iqtree "${params.iqtreeargs}" \
