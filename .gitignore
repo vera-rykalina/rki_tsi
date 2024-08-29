@@ -11,3 +11,5 @@ single_reads/
 paired_reads/
 shiver/
 phyloscanner/
+output_pe_kraken_filter/
+shiver_align_mafft_7.525.command.log
