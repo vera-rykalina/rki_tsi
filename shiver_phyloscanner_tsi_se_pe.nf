@@ -234,6 +234,7 @@ process FASTP_FASTQC {
 
 
 process ALIENTRIMMER {
+  conda "${projectDir}/env/multiqc.yml"
   publishDir "${params.outdir}/08_primer_trimmed/${id}", mode: "copy", overwrite: true
   //debug true
   
