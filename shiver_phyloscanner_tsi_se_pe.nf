@@ -234,7 +234,6 @@ process FASTP_FASTQC {
 
 
 process ALIENTRIMMER {
-  conda "${projectDir}/env/multiqc.yml"
   publishDir "${params.outdir}/08_primer_trimmed/${id}", mode: "copy", overwrite: true
   //debug true
   
@@ -1143,7 +1142,7 @@ workflow {
     ch_merged_contigs = MERGE_CONTIGS ( ch_spades_combined )
     ch_cd_hit_est = CD_HIT_EST ( ch_merged_contigs )
     // ******************************************************SHIVER*********************************************************************
-    ch_fastq_renamed_header = FASTQ_RENAME_HEADER ( ch_primer_trimmed )
+    ch_fastq_renamed_header = FASTQ_RENAME_HEADER ( ch_input_fastq )
     ch_initdir = SHIVER_INIT ( params.alignment, primers )
     ch_kallisto_index = KALLISTO_INDEX ( ch_initdir.ExistingRefsUngapped )
     ch_kallisto_index_reads = ch_kallisto_index.combine( ch_fastq_renamed_header )
