@@ -49,8 +49,6 @@ primers = params.primers
 
 
 // Parameters for phyloscanner
-params.raxmlargs = "raxmlHPC-SSE3 -m GTRCAT -p 1 --no-seq-check"
-params.iqtreeargs = "iqtree -m GTR+F+R6 --seed 1"
 params.two_refs = "${projectDir}/data/refs/2refs_HXB2_C.BW.fasta"
 params.excision_coordinates = "${projectDir}/data/phyloscanner/DrugResistancePositionsInHXB2.txt"
 params.windows_oneline = "${projectDir}/data/phyloscanner/windows250_VR_norms_oneline.txt"
