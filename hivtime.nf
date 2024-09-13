@@ -126,9 +126,9 @@ def helpMSG() {
     
 
     ${c_green}Optional input settings:${c_reset}
-    --adapters               Define the path of a FASTA file containing the adapter sequences to be clipped. [default: adapters.fasta]
+    --adapters               Define the path of a FASTA file containing the adapter sequences to be clipped. [default: data/adapters/adapters.fasta]
 
-    --alignment              Define the path of a FASTA file containing the HIV alignment [default: HIV1_COM_2022_genome_DNA.fasta ] 
+    --alignment              Define the path of a FASTA file containing the HIV alignment [default: data/alignments/fHIV1_COM_2022_genome_DNA.fasta ] 
 
 
     """
