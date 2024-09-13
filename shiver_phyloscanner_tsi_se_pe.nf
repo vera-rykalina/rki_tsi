@@ -62,6 +62,10 @@ params.normalisation = "${projectDir}/bin/tools/CalculateTreeSizeInGenomeWindows
 
 
 
+// help message
+if (params.help) { exit 0, helpMSG() }
+
+
 // error codes
 params.profile = null
 if (params.profile) {
@@ -70,18 +74,27 @@ if (params.profile) {
 params.outdir = null
 if (!params.outdir) {
   println "outdir: $params.outdir"
-  error "Missing output directory!"
+  error "missing output directory, use [--outdir]"
 }
-
-if ( !params.fastq ) {
-    exit 1, "input missing, use [--fastq]"
-}
-
 
 Set modes = ['paired', 'single']
 if ( ! (params.mode in modes) ) {
     exit 1, "Unknown mode. Choose from " + modes
 }
+
+
+if ( !params.fastq ) {
+    exit 1, "input missing, use [--fastq]"
+}
+
+if ( !params.krakendb ) {
+    exit 1, "input missing, use [--krakendb]"
+}
+
+if ( !params.primers ) {
+    exit 1, "input missing, use [--primers]"
+
+
 
 
 
