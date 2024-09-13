@@ -202,7 +202,7 @@ process FASTP {
         --in1 ${reads[0]} \
         --out1 ${id}_fastp.R1.fastq.gz \
         ${set_paired_reads} \
-        --adapter_fasta ${params.illumina_adapters} \
+        --adapter_fasta ${params.adapters} \
         --json ${id}_fastp.json \
         --html ${id}_fastp.html \
         --low_complexity_filter \
@@ -457,7 +457,7 @@ process SHIVER_INIT {
     InitDir \
     ${params.config_pe} \
     ${alignment} \
-    ${params.illumina_adapters} \
+    ${params.adapters} \
     ${primers}
   """  
   } else if (params.mode == "single") {
@@ -467,7 +467,7 @@ process SHIVER_INIT {
     InitDir \
     ${params.config_se} \
     ${alignment} \
-    ${params.illumina_adapters} \
+    ${params.adapters} \
     ${primers}
   """ 
   }
@@ -1077,7 +1077,7 @@ params.taxid = "11676"
 
 // Parameters for shiver
 params.alientrimmer = "${projectDir}/bin/AlienTrimmer.jar"
-params.illumina_adapters = "${projectDir}/data/adapters/adapters_Illumina.fasta"
+params.adapters = "${projectDir}/data/adapters/adapters_Illumina.fasta"
 params.config_se = "${projectDir}/bin/config_se.sh"
 params.config_pe = "${projectDir}/bin/config_pe.sh"
 params.alignment = "${projectDir}/data/alignments/HIV1_COM_2022_genome_DNA.fasta"
