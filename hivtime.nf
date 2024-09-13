@@ -2,7 +2,7 @@ nextflow.enable.dsl = 2
 
 // Run
 
-/* nextflow shiver_phyloscanner_tsi_se_pe.nf \
+/* nextflow hivtime.nf \
 -c hivtime_profile.config 
 --outdir output_pe
 --fastq "/scratch/rykalinav/rki_recency/Pipeline/RawData/*R{1,2}*.fastq.gz" 
