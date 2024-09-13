@@ -15,25 +15,12 @@ nextflow.enable.dsl = 2
 */
 
 
-log.info """
-====================================================
-                  TSI PIPELINE
-====================================================
-             Author: Vera Rykalina
-       Affiliation: Robert Koch Institute 
-        Acknowledgement: Tanay Golubchik
-              Created: 25 June 2024
-           Last Updated: 8 August 2024
-====================================================
-         """
-
-
 //**************************************************PARAMETERS*******************************************************
 // Change is required! Specify your projectDir here
 projectDir = "/scratch/rykalinav/rki_tsi"
 
 // Parameters for kraken
-krakendb = params.krakendb
+//krakendb = params.krakendb
 // taxid of HIV-1 
 params.taxid = "11676"
 
@@ -44,7 +31,7 @@ params.adapters = "${projectDir}/data/adapters/adapters_Illumina.fasta"
 params.config_se = "${projectDir}/bin/config_se.sh"
 params.config_pe = "${projectDir}/bin/config_pe.sh"
 params.alignment = "${projectDir}/data/alignments/HIV1_COM_2022_genome_DNA.fasta"
-primers = params.primers
+//primers = params.primers
 
 
 
@@ -87,14 +74,62 @@ if ( !params.fastq ) {
     exit 1, "input missing, use [--fastq]"
 }
 
+params.krakendb = null
 if ( !params.krakendb ) {
     exit 1, "input missing, use [--krakendb]"
 }
 
+params.primers = null
 if ( !params.primers ) {
     exit 1, "input missing, use [--primers]"
+}
 
 
+def helpMSG() {
+    c_green = "\033[0;32m";
+    c_reset = "\033[0m";
+    c_yellow = "\033[0;33m";
+    c_blue = "\033[0;34m";
+    c_red = "\u001B[31m";
+    c_dim = "\033[2m";
+    log.info """
+  
+
+    ${c_blue}HiVtime${c_blue}
+    ====================================================
+    Author: Vera Rykalina
+    ${c_blue}Affiliation: Robert Koch Institute${c_blue}
+    Acknowledgement: Tanay Golubchik
+    Created: 25 June 2024
+    ====================================================
+  
+
+    ${c_yellow}Usage examples:${c_reset}
+    nextflow hivtime.nf -c profile.config --fastq '*R{1,2}.fastq.gz' --krakendb db --primers primers.fasta --mode paired -profile profile --oudir output 
+   
+    
+    ${c_green}Required settings:${c_reset}  
+    
+    --fastq                 Path to a FASTQ files e.g.: '*R{1,2}*.fastq.gz'
+
+    --krakendb              Path to a Kraken2 database. [recommended: kraken2_nt_20231129]
+
+    --mode                  Choose from [paired, single]
+    
+    --outdir                Name for an output directory e.g. output [string]
+
+    --primers               Path of a FASTA file containing the primer sequences to be clipped
+
+    
+
+    ${c_green}Optional input settings:${c_reset}
+    --adapters               Define the path of a FASTA file containing the adapter sequences to be clipped. [default: adapters.fasta]
+
+    --alignment              Define the path of a FASTA file containing the HIV alignment [default: HIV1_COM_2022_genome_DNA.fasta ] 
+
+
+    """
+}
 
 
 
