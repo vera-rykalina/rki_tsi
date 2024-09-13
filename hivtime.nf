@@ -20,18 +20,18 @@ nextflow.enable.dsl = 2
 projectDir = "/scratch/rykalinav/rki_tsi"
 
 // Parameters for kraken
-//krakendb = params.krakendb
+krakendb = params.krakendb
 // taxid of HIV-1 
 params.taxid = "11676"
 
 
 // Parameters for shiver
 params.alientrimmer = "${projectDir}/bin/AlienTrimmer.jar"
-params.adapters = "${projectDir}/data/adapters/adapters_Illumina.fasta"
+params.adapters = "${projectDir}/data/adapters/adapters.fasta"
 params.config_se = "${projectDir}/bin/config_se.sh"
 params.config_pe = "${projectDir}/bin/config_pe.sh"
 params.alignment = "${projectDir}/data/alignments/HIV1_COM_2022_genome_DNA.fasta"
-//primers = params.primers
+primers = params.primers
 
 
 
@@ -50,6 +50,8 @@ params.normalisation = "${projectDir}/bin/tools/CalculateTreeSizeInGenomeWindows
 
 
 // help message
+params.help = false
+
 if (params.help) { exit 0, helpMSG() }
 
 
@@ -61,7 +63,7 @@ if (params.profile) {
 params.outdir = null
 if (!params.outdir) {
   println "outdir: $params.outdir"
-  error "missing output directory, use [--outdir]"
+  error "Missing output directory, use [--outdir]"
 }
 
 Set modes = ['paired', 'single']
@@ -71,17 +73,17 @@ if ( ! (params.mode in modes) ) {
 
 
 if ( !params.fastq ) {
-    exit 1, "input missing, use [--fastq]"
+    exit 1, "Missing input, use [--fastq]"
 }
 
 params.krakendb = null
 if ( !params.krakendb ) {
-    exit 1, "input missing, use [--krakendb]"
+    exit 1, "Missing input, use [--krakendb]"
 }
 
 params.primers = null
 if ( !params.primers ) {
-    exit 1, "input missing, use [--primers]"
+    exit 1, "Missing input, use [--primers]"
 }
 
 
