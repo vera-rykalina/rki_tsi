@@ -159,122 +159,10 @@ process RAW_FASTQC {
 }
 
 
-// kraken2
-process CLASSIFY {
-
-    label "kraken"
-    conda "${projectDir}/env/kraken.yml"
-    publishDir "${params.outdir}/02_classified_reads/${id}", mode: "copy", overwrite: true, pattern: "*.txt"
-
-    input:
-        tuple val(id), path(reads)
-        val (params.krakendb)
-
-    output:
-        tuple val(id), path("${id}_classified.R*.fastq"),     emit: ClassifiedFastq
-        tuple val(id), path("${id}_unclassified.R*.fastq"),   emit: UnclassifiedFastq
-        tuple val(id), path("${id}_kraken.out.txt"),          emit: KrakenOutput
-        tuple val(id), path("${id}_kraken.report.txt"),       emit: KrakenReport
-
-
-    script:
-        set_paired = params.mode == 'paired' ? '--paired' : ''
-        set_out_name = params.mode == 'paired' ? '#' : ''
-
-            """
-             kraken2 \
-              --threads ${task.cpus} \
-              --db ${params.krakendb} \
-              ${set_paired} \
-              --classified-out ${id}_classified.R${set_out_name}.fastq \
-              --unclassified-out ${id}_unclassified.R${set_out_name}.fastq \
-              --output ${id}_kraken.out.txt \
-              --report ${id}_kraken.report.txt \
-              --gzip-compressed \
-              ${reads}
-          """     
-}
-
-
-// krakentools
-process EXTRACT {
-    label "krakentools"
-    conda "${projectDir}/env/krakentools.yml"
-    publishDir "${params.outdir}/03_filtered_reads/${id}", mode: "copy", overwrite: true
-
-
-    input:
-        tuple val(id), path(reads)
-        tuple val(id), path(kraken_output)
-        tuple val(id), path(kraken_report)
-        val (taxid)
- 
-    
-    output:
-        tuple val(id), path("${id}_filtered.R*.fastq")
-    
-    script:
-        set_paired_reads = params.mode == 'single' ? '' : "-2 ${reads[1]} -o2 ${id}_filtered.R2.fastq"
-           """
-            extract_kraken_reads.py \
-                -1 ${reads[0]} \
-                -o ${id}_filtered.R1.fastq \
-                ${set_paired_reads} \
-                -k ${kraken_output} \
-                --report ${kraken_report} \
-                --include-children \
-                --taxid ${taxid} \
-                --fastq-output
-        """
-}
-
-
-// merge unclassified and filtered reads
-process MERGE {
-    publishDir "${params.outdir}/04_merged_reads/${id}", failOnError: true, mode: "copy", overwrite: true
-
-    input:
-        tuple val(id), path(unclassified), path(filtered)
-
-    output:
-        tuple val("${id}"), path("${id}_kraken.R*.fastq.gz")
-
-    script:
-    if (params.mode == "paired") {
-        """
-        cat ${unclassified[0]} ${filtered[0]} | gzip -c > ${id}_kraken.R1.fastq.gz
-        cat ${unclassified[1]} ${filtered[1]} | gzip -c > ${id}_kraken.R2.fastq.gz
-        """
-    } else if (params.mode == "single") {
-       """
-       cat ${unclassified[0]} ${filtered[0]} | gzip -c > ${id}_kraken.R1.fastq.gz
-       """
-    }
-}
-
-
-process KRAKEN_FASTQC {
-  conda "${projectDir}/env/fastqc.yml"
-  publishDir "${params.outdir}/05_kraken_fastqc/${id}", mode: "copy", overwrite: true
- // debug true
-
-  input:
-    tuple val(id), path(reads)
-  output:
-    path "${id}*_fastqc.html", emit: Html
-    path "${id}*_fastqc.zip",  emit: Zip
- 
-  script:
-    
-    """
-    fastqc ${reads}
-    """
-}
-
 process FASTP {
   label "fastp"
   conda "${projectDir}/env/fastp.yml"
-  publishDir "${params.outdir}/06_fastp_trimmed/${id}", mode: "copy", overwrite: true
+  publishDir "${params.outdir}/02_fastp_trimmed/${id}", mode: "copy", overwrite: true
   //debug true
 
   input:
@@ -307,7 +195,7 @@ process FASTP {
 
 process FASTP_FASTQC {
   conda "${projectDir}/env/fastqc.yml"
-  publishDir "${params.outdir}/07_trimmed_fastqc/${id}", mode: "copy", overwrite: true
+  publishDir "${params.outdir}/03_trimmed_fastqc/${id}", mode: "copy", overwrite: true
  // debug true
 
   input:
@@ -326,7 +214,7 @@ process FASTP_FASTQC {
 
 process ALIENTRIMMER {
   conda "${projectDir}/env/multiqc.yml"
-  publishDir "${params.outdir}/08_primer_trimmed/${id}", mode: "copy", overwrite: true
+  publishDir "${params.outdir}/04_primer_trimmed/${id}", mode: "copy", overwrite: true
   //debug true
   
   input:
@@ -370,7 +258,7 @@ process ALIENTRIMMER {
 
 process ALIENTRIMMER_FASTQC {
   conda "${projectDir}/env/fastqc.yml"
-  publishDir "${params.outdir}/09_alientrimmed_fastqc/${id}", mode: "copy", overwrite: true
+  publishDir "${params.outdir}/05_alientrimmed_fastqc/${id}", mode: "copy", overwrite: true
  // debug true
 
   input:
@@ -385,6 +273,121 @@ process ALIENTRIMMER_FASTQC {
     fastqc ${reads}
     """
 }
+
+
+
+// kraken2
+process CLASSIFY {
+
+    label "kraken"
+    conda "${projectDir}/env/kraken.yml"
+    publishDir "${params.outdir}/06_classified_reads/${id}", mode: "copy", overwrite: true, pattern: "*.txt"
+
+    input:
+        tuple val(id), path(reads)
+        val (params.krakendb)
+
+    output:
+        tuple val(id), path("${id}_classified.R*.fastq"),     emit: ClassifiedFastq
+        tuple val(id), path("${id}_unclassified.R*.fastq"),   emit: UnclassifiedFastq
+        tuple val(id), path("${id}_kraken.out.txt"),          emit: KrakenOutput
+        tuple val(id), path("${id}_kraken.report.txt"),       emit: KrakenReport
+
+
+    script:
+        set_paired = params.mode == 'paired' ? '--paired' : ''
+        set_out_name = params.mode == 'paired' ? '#' : ''
+
+            """
+             kraken2 \
+              --threads ${task.cpus} \
+              --db ${params.krakendb} \
+              ${set_paired} \
+              --classified-out ${id}_classified.R${set_out_name}.fastq \
+              --unclassified-out ${id}_unclassified.R${set_out_name}.fastq \
+              --output ${id}_kraken.out.txt \
+              --report ${id}_kraken.report.txt \
+              --gzip-compressed \
+              ${reads}
+          """     
+}
+
+
+// krakentools
+process EXTRACT {
+    label "krakentools"
+    conda "${projectDir}/env/krakentools.yml"
+    publishDir "${params.outdir}/07_filtered_reads/${id}", mode: "copy", overwrite: true
+
+
+    input:
+        tuple val(id), path(reads)
+        tuple val(id), path(kraken_output)
+        tuple val(id), path(kraken_report)
+        val (taxid)
+ 
+    
+    output:
+        tuple val(id), path("${id}_filtered.R*.fastq")
+    
+    script:
+        set_paired_reads = params.mode == 'single' ? '' : "-2 ${reads[1]} -o2 ${id}_filtered.R2.fastq"
+           """
+            extract_kraken_reads.py \
+                -1 ${reads[0]} \
+                -o ${id}_filtered.R1.fastq \
+                ${set_paired_reads} \
+                -k ${kraken_output} \
+                --report ${kraken_report} \
+                --include-children \
+                --taxid ${taxid} \
+                --fastq-output
+        """
+}
+
+
+// merge unclassified and filtered reads
+process MERGE {
+    publishDir "${params.outdir}/08_merged_reads/${id}", failOnError: true, mode: "copy", overwrite: true
+
+    input:
+        tuple val(id), path(unclassified), path(filtered)
+
+    output:
+        tuple val("${id}"), path("${id}_kraken.R*.fastq.gz")
+
+    script:
+    if (params.mode == "paired") {
+        """
+        cat ${unclassified[0]} ${filtered[0]} | gzip -c > ${id}_kraken.R1.fastq.gz
+        cat ${unclassified[1]} ${filtered[1]} | gzip -c > ${id}_kraken.R2.fastq.gz
+        """
+    } else if (params.mode == "single") {
+       """
+       cat ${unclassified[0]} ${filtered[0]} | gzip -c > ${id}_kraken.R1.fastq.gz
+       """
+    }
+}
+
+
+process KRAKEN_FASTQC {
+  conda "${projectDir}/env/fastqc.yml"
+  publishDir "${params.outdir}/09_kraken_fastqc/${id}", mode: "copy", overwrite: true
+ // debug true
+
+  input:
+    tuple val(id), path(reads)
+  output:
+    path "${id}*_fastqc.html", emit: Html
+    path "${id}*_fastqc.zip",  emit: Zip
+ 
+  script:
+    
+    """
+    fastqc ${reads}
+    """
+}
+
 
 process MULTIQC {
   conda "${projectDir}/env/multiqc.yml"
@@ -1181,31 +1184,32 @@ if (params.mode == 'paired') {
 workflow {
    // ***********************************************************QC*********************************************************************
     ch_raw_fastqc = RAW_FASTQC ( ch_input_fastq )
-    ch_classified_reads = CLASSIFY ( ch_input_fastq, params.krakendb )
-    ch_filtered_reads = EXTRACT ( ch_classified_reads.ClassifiedFastq, ch_classified_reads.KrakenOutput, ch_classified_reads.KrakenReport, params.taxid )
-    ch_merged_reads = MERGE ( ch_classified_reads.UnclassifiedFastq.combine( ch_filtered_reads, by:0 ) )
-    ch_kraken_fastqc = KRAKEN_FASTQC ( ch_merged_reads )
-    ch_fastp_trimmed = FASTP (  ch_merged_reads )
+    ch_fastp_trimmed = FASTP (  ch_input_fastq )
     ch_fastp_fastqc = FASTP_FASTQC ( ch_fastp_trimmed.Reads ) 
     ch_primer_trimmed = ALIENTRIMMER ( ch_fastp_trimmed.Reads, params.primers )
     ch_alientrimmer_fastqc = ALIENTRIMMER_FASTQC ( ch_primer_trimmed ) 
+    ch_classified_reads = CLASSIFY ( ch_primer_trimmed, params.krakendb )
+    ch_filtered_reads = EXTRACT ( ch_classified_reads.ClassifiedFastq, ch_classified_reads.KrakenOutput, ch_classified_reads.KrakenReport, params.taxid )
+    ch_merged_reads = MERGE ( ch_classified_reads.UnclassifiedFastq.combine( ch_filtered_reads, by:0 ) )
+    ch_kraken_fastqc = KRAKEN_FASTQC ( ch_merged_reads )    
     ch_multiqc = MULTIQC ( ch_raw_fastqc.Zip.concat(ch_fastp_fastqc.Zip).concat(ch_alientrimmer_fastqc.Zip).concat(ch_kraken_fastqc.Zip).collect() )
-    ch_spades = SPADES ( ch_primer_trimmed )
-    ch_metaspades = METASPADES ( ch_primer_trimmed )
+
+    ch_spades = SPADES ( ch_merged_reads )
+    ch_metaspades = METASPADES ( ch_merged_reads )
     // Combine according to a key that is the first value of every first element, which is a list
     ch_spades_combined = ch_spades.SpadesContigs.combine( ch_metaspades.MetaspadesContigs, by:0 )
     ch_merged_contigs = MERGE_CONTIGS ( ch_spades_combined )
     ch_cd_hit_est = CD_HIT_EST ( ch_merged_contigs )
     // ******************************************************SHIVER*********************************************************************
-    ch_fastq_renamed_header = FASTQ_RENAME_HEADER ( ch_input_fastq )
+    ch_fastq_renamed_header = FASTQ_RENAME_HEADER ( ch_merged_reads  )
     ch_initdir = SHIVER_INIT ( params.alignment, params.primers )
     ch_kallisto_index = KALLISTO_INDEX ( ch_initdir.ExistingRefsUngapped )
     ch_kallisto_index_reads = ch_kallisto_index.combine( ch_fastq_renamed_header )
     ch_kallisto_quant = KALLISTO_QUANT( ch_kallisto_index_reads )
     ch_best_ref = BEST_ALIGNMENT ( ch_initdir.IndividualRefs, ch_kallisto_quant )
-    ch_wref = SHIVER_ALIGN ( ch_initdir.InitDir, ch_merged_contigs )
+    ch_wref = SHIVER_ALIGN ( ch_initdir.InitDir, ch_cd_hit_est )
     // Combine according to a key that is the first value of every first element, which is a list
-    ch_mapping_args = ch_best_ref.combine(ch_merged_contigs, by:0).combine(ch_wref, by:0).combine(ch_fastq_renamed_header, by:0)
+    ch_mapping_args = ch_best_ref.combine(ch_cd_hit_est, by:0).combine(ch_wref, by:0).combine(ch_fastq_renamed_header, by:0)
     ch_mapping_args_non_reads = ch_mapping_args.map {id, bestref, contigs, shiverref, blast, reads  -> tuple (id, bestref, contigs, shiverref, blast)}
     ch_mapping_args_reads = ch_mapping_args.map {id, bestref, contigs, shiverref, blast, reads  -> tuple (id, reads)}
     ch_mapping_out = SHIVER_MAP ( ch_initdir.InitDir, ch_mapping_args_non_reads, ch_mapping_args_reads )
