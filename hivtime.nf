@@ -20,7 +20,8 @@ nextflow.enable.dsl = 2
 projectDir = "/scratch/rykalinav/rki_tsi"
 
 // Parameters for kraken
-krakendb = params.krakendb
+//krakendb = params.krakendb
+
 // taxid of HIV-1 
 params.taxid = "11676"
 
@@ -31,7 +32,7 @@ params.adapters = "${projectDir}/data/adapters/adapters.fasta"
 params.config_se = "${projectDir}/bin/config_se.sh"
 params.config_pe = "${projectDir}/bin/config_pe.sh"
 params.alignment = "${projectDir}/data/alignments/HIV1_COM_2022_genome_DNA.fasta"
-primers = params.primers
+//primers = params.primers
 
 
 
@@ -167,7 +168,7 @@ process CLASSIFY {
 
     input:
         tuple val(id), path(reads)
-        val (krakendb)
+        val (params.krakendb)
 
     output:
         tuple val(id), path("${id}_classified.R*.fastq"),     emit: ClassifiedFastq
@@ -183,7 +184,7 @@ process CLASSIFY {
             """
              kraken2 \
               --threads ${task.cpus} \
-              --db ${krakendb} \
+              --db ${params.krakendb} \
               ${set_paired} \
               --classified-out ${id}_classified.R${set_out_name}.fastq \
               --unclassified-out ${id}_unclassified.R${set_out_name}.fastq \
@@ -330,7 +331,7 @@ process ALIENTRIMMER {
   
   input:
      tuple val(id), path(reads)
-     val (primers)
+     val (params.primers)
   
   output:
     tuple val(id), path("${id}_alientrimmer.R*.fastq.gz")
@@ -344,7 +345,7 @@ process ALIENTRIMMER {
   java -jar ${params.alientrimmer} \
        -1 ${reads[0]} \
        -2 ${reads[1]} \
-       -a ${primers} \
+       -a ${params.primers} \
        -o ${id}_alientrimmer.R \
        -k 15 \
        -z
@@ -356,7 +357,7 @@ process ALIENTRIMMER {
     """
       java -jar ${params.alientrimmer} \
            -i ${reads[0]} \
-           -a ${primers} \
+           -a ${params.primers} \
            -o ${id}_alientrimmer.R \
            -k 15 \
            -z
@@ -533,7 +534,7 @@ process SHIVER_INIT {
 
   input:
      val (alignment)
-     val (primers)
+     val (params.primers)
      
   output:
      path "InitDir", emit: InitDir
@@ -548,7 +549,7 @@ process SHIVER_INIT {
     ${params.config_pe} \
     ${alignment} \
     ${params.adapters} \
-    ${primers}
+    ${params.primers}
   """  
   } else if (params.mode == "single") {
 
@@ -558,7 +559,7 @@ process SHIVER_INIT {
     ${params.config_se} \
     ${alignment} \
     ${params.adapters} \
-    ${primers}
+    ${params.primers}
   """ 
   }
 }
@@ -1180,13 +1181,13 @@ if (params.mode == 'paired') {
 workflow {
    // ***********************************************************QC*********************************************************************
     ch_raw_fastqc = RAW_FASTQC ( ch_input_fastq )
-    ch_classified_reads = CLASSIFY ( ch_input_fastq, krakendb )
+    ch_classified_reads = CLASSIFY ( ch_input_fastq, params.krakendb )
     ch_filtered_reads = EXTRACT ( ch_classified_reads.ClassifiedFastq, ch_classified_reads.KrakenOutput, ch_classified_reads.KrakenReport, params.taxid )
     ch_merged_reads = MERGE ( ch_classified_reads.UnclassifiedFastq.combine( ch_filtered_reads, by:0 ) )
     ch_kraken_fastqc = KRAKEN_FASTQC ( ch_merged_reads )
     ch_fastp_trimmed = FASTP (  ch_merged_reads )
     ch_fastp_fastqc = FASTP_FASTQC ( ch_fastp_trimmed.Reads ) 
-    ch_primer_trimmed = ALIENTRIMMER ( ch_fastp_trimmed.Reads, primers )
+    ch_primer_trimmed = ALIENTRIMMER ( ch_fastp_trimmed.Reads, params.primers )
     ch_alientrimmer_fastqc = ALIENTRIMMER_FASTQC ( ch_primer_trimmed ) 
     ch_multiqc = MULTIQC ( ch_raw_fastqc.Zip.concat(ch_fastp_fastqc.Zip).concat(ch_alientrimmer_fastqc.Zip).concat(ch_kraken_fastqc.Zip).collect() )
     ch_spades = SPADES ( ch_primer_trimmed )
@@ -1197,7 +1198,7 @@ workflow {
     ch_cd_hit_est = CD_HIT_EST ( ch_merged_contigs )
     // ******************************************************SHIVER*********************************************************************
     ch_fastq_renamed_header = FASTQ_RENAME_HEADER ( ch_input_fastq )
-    ch_initdir = SHIVER_INIT ( params.alignment, primers )
+    ch_initdir = SHIVER_INIT ( params.alignment, params.primers )
     ch_kallisto_index = KALLISTO_INDEX ( ch_initdir.ExistingRefsUngapped )
     ch_kallisto_index_reads = ch_kallisto_index.combine( ch_fastq_renamed_header )
     ch_kallisto_quant = KALLISTO_QUANT( ch_kallisto_index_reads )
