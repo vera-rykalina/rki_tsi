@@ -5,7 +5,7 @@ nextflow.enable.dsl = 2
 /* nextflow hivtime.nf \
 -c hivtime_profile.config 
 --outdir output_pe
---fastq "/scratch/rykalinav/rki_recency/Pipeline/RawData/*R{1,2}*.fastq.gz" 
+--fastq "/scratch/rykalinav/rki_tsi/paired_reads/*R{1,2}*.fastq.gz" 
 -profile rki_slurm,rki_mamba \
 --krakendb /scratch/databases/kraken2_nt_20231129/ \
 --mode paired 
