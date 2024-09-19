@@ -102,7 +102,7 @@ def helpMSG() {
     ====================================================
     Author: Vera Rykalina
     ${c_blue}Affiliation: Robert Koch Institute${c_blue}
-    Acknowledgement: Tanay Golubchik
+    Acknowledgement: Tanay Golubchik, Chris Wymant
     Created: 25 June 2024
     ====================================================
   
@@ -138,7 +138,7 @@ def helpMSG() {
 
 process RAW_FASTQC {
   conda "${projectDir}/env/fastqc.yml"
-  publishDir "${params.outdir}/01_raw_fastqc/${id}", mode: "copy", overwrite: true
+ //publishDir "${params.outdir}/raw_fastqc/${id}", mode: "copy", overwrite: true
  // debug true
 
   input:
@@ -162,7 +162,7 @@ process RAW_FASTQC {
 process FASTP {
   label "fastp"
   conda "${projectDir}/env/fastp.yml"
-  publishDir "${params.outdir}/02_fastp_trimmed/${id}", mode: "copy", overwrite: true
+  //publishDir "${params.outdir}/fastp_trimmed/${id}", mode: "copy", overwrite: true
   //debug true
 
   input:
@@ -195,7 +195,7 @@ process FASTP {
 
 process FASTP_FASTQC {
   conda "${projectDir}/env/fastqc.yml"
-  publishDir "${params.outdir}/03_trimmed_fastqc/${id}", mode: "copy", overwrite: true
+ //publishDir "${params.outdir}/trimmed_fastqc/${id}", mode: "copy", overwrite: true
  // debug true
 
   input:
@@ -214,7 +214,7 @@ process FASTP_FASTQC {
 
 process ALIENTRIMMER {
   conda "${projectDir}/env/multiqc.yml"
-  publishDir "${params.outdir}/04_primer_trimmed/${id}", mode: "copy", overwrite: true
+  //publishDir "${params.outdir}/primer_trimmed/${id}", mode: "copy", overwrite: true
   //debug true
   
   input:
@@ -258,7 +258,7 @@ process ALIENTRIMMER {
 
 process ALIENTRIMMER_FASTQC {
   conda "${projectDir}/env/fastqc.yml"
-  publishDir "${params.outdir}/05_alientrimmed_fastqc/${id}", mode: "copy", overwrite: true
+ //publishDir "${params.outdir}/alientrimmed_fastqc/${id}", mode: "copy", overwrite: true
  // debug true
 
   input:
@@ -281,7 +281,7 @@ process CLASSIFY {
 
     label "kraken"
     conda "${projectDir}/env/kraken.yml"
-    publishDir "${params.outdir}/06_classified_reads/${id}", mode: "copy", overwrite: true, pattern: "*.txt"
+    publishDir "${params.outdir}/01_classified_reads/${id}", mode: "copy", overwrite: true, pattern: "*.txt"
 
     input:
         tuple val(id), path(reads)
@@ -317,7 +317,7 @@ process CLASSIFY {
 process EXTRACT {
     label "krakentools"
     conda "${projectDir}/env/krakentools.yml"
-    publishDir "${params.outdir}/07_filtered_reads/${id}", mode: "copy", overwrite: true
+    //publishDir "${params.outdir}/filtered_reads/${id}", mode: "copy", overwrite: true
 
 
     input:
@@ -348,7 +348,7 @@ process EXTRACT {
 
 // merge unclassified and filtered reads
 process MERGE {
-    publishDir "${params.outdir}/08_merged_reads/${id}", failOnError: true, mode: "copy", overwrite: true
+    //publishDir "${params.outdir}/merged_reads/${id}", failOnError: true, mode: "copy", overwrite: true
 
     input:
         tuple val(id), path(unclassified), path(filtered)
@@ -372,8 +372,8 @@ process MERGE {
 
 process KRAKEN_FASTQC {
   conda "${projectDir}/env/fastqc.yml"
-  publishDir "${params.outdir}/09_kraken_fastqc/${id}", mode: "copy", overwrite: true
- // debug true
+  //publishDir "${params.outdir}/kraken_fastqc/${id}", mode: "copy", overwrite: true
+  // debug true
 
   input:
     tuple val(id), path(reads)
@@ -391,7 +391,7 @@ process KRAKEN_FASTQC {
 
 process MULTIQC {
   conda "${projectDir}/env/multiqc.yml"
-  publishDir "${params.outdir}/10_multiqc", mode: "copy", overwrite: true
+  publishDir "${params.outdir}/02_multiqc", mode: "copy", overwrite: true
   debug true
   
   input:
@@ -410,7 +410,7 @@ process MULTIQC {
 process SPADES {
   label "spades"
   conda "${projectDir}/env/spades.yml"
-  publishDir "${params.outdir}/11_spades", mode: "copy", overwrite: true
+  //publishDir "${params.outdir}/spades", mode: "copy", overwrite: true
   
   input:
     tuple val(id), path(reads) 
@@ -451,7 +451,7 @@ process SPADES {
 process METASPADES {
   label "spades"
   conda "${projectDir}/env/spades.yml"
-  publishDir "${params.outdir}/12_metaspades", mode: "copy", overwrite: true
+  //publishDir "${params.outdir}/metaspades", mode: "copy", overwrite: true
   
   input:
     tuple val(id), path(reads) 
@@ -486,7 +486,7 @@ process METASPADES {
 
 
 process MERGE_CONTIGS {
-  publishDir "${params.outdir}/14_merged_contigs", mode: "copy", overwrite: true
+  //publishDir "${params.outdir}/merged_contigs", mode: "copy", overwrite: true
   
   input:
     tuple val(id), path(spades_contigs), path(metaspades_contigs) 
@@ -506,7 +506,7 @@ process MERGE_CONTIGS {
 process CD_HIT_EST {
   label "cd_hit_est"
   conda "${projectDir}/env/cd-hit.yml"
-  publishDir "${params.outdir}/15_clustered_contigs", mode: "copy", overwrite: true
+  publishDir "${params.outdir}/03_clustered_contigs", mode: "copy", overwrite: true
   
   input:
     tuple val(id), path(contigs) 
@@ -533,7 +533,7 @@ process CD_HIT_EST {
 // SHIVER PART (including KALLISTO)
 process SHIVER_INIT {
   conda "${projectDir}/env/shiver.yml"
-  publishDir "${projectDir}/${params.outdir}/16_init_dir", mode: "copy", overwrite: true
+  //publishDir "${projectDir}/${params.outdir}/init_dir", mode: "copy", overwrite: true
 
   input:
      val (alignment)
@@ -569,8 +569,8 @@ process SHIVER_INIT {
 
 
 process FASTQ_RENAME_HEADER {
-  publishDir "${params.outdir}/17_renamed_reads", mode: "copy", overwrite: true
-  debug true
+  //publishDir "${params.outdir}/renamed_reads", mode: "copy", overwrite: true
+  //debug true
 
   input:
     tuple val(id), path(reads)
@@ -610,7 +610,7 @@ process FASTQ_RENAME_HEADER {
 
 process KALLISTO_INDEX {
   conda "${projectDir}/env/kallisto.yml"
-  publishDir "${projectDir}/${params.outdir}/18_kallisto_idx", mode: "copy", overwrite: true
+  //publishDir "${projectDir}/${params.outdir}/kallisto_idx", mode: "copy", overwrite: true
 
   input:
      path fasta
@@ -626,8 +626,8 @@ process KALLISTO_INDEX {
 
 process KALLISTO_QUANT {
   conda "${projectDir}/env/kallisto.yml"
-  publishDir "${projectDir}/${params.outdir}/19_kallisto_quant", mode: "copy", overwrite: true
-  debug true
+  //publishDir "${projectDir}/${params.outdir}/kallisto_quant", mode: "copy", overwrite: true
+  //debug true
 
   input:
      tuple path(index), val(id), path(reads)
@@ -662,7 +662,7 @@ process KALLISTO_QUANT {
 }
 
 process BEST_ALIGNMENT {
-  publishDir "${projectDir}/${params.outdir}/20_best_ref", mode: "copy", overwrite: true
+  publishDir "${projectDir}/${params.outdir}/04_kallisto_best_ref", mode: "copy", overwrite: true
   debug true
 
   input:
@@ -684,7 +684,7 @@ process BEST_ALIGNMENT {
 process SHIVER_ALIGN {
   label "shiver"
   conda "${projectDir}/env/shiver.yml"
-  publishDir "${params.outdir}/21_alignments/${id}", mode: "copy", overwrite: true
+  //publishDir "${params.outdir}/shiver_alignments/${id}", mode: "copy", overwrite: true
   //debug true
   
   input:
@@ -733,7 +733,7 @@ process SHIVER_ALIGN {
 process SHIVER_MAP {
   label "shiver"
   conda "${projectDir}/env/shiver.yml"
-  publishDir "${params.outdir}/22_mapped/${id}", mode: "copy", overwrite: true
+  publishDir "${params.outdir}/05_shiver_map/${id}", mode: "copy", overwrite: true
   //debug true
 
   input:
@@ -819,7 +819,7 @@ process SHIVER_MAP {
 
 process MAF {
  conda "${projectDir}/env/tsi-python.yml"
- publishDir "${params.outdir}/23_maf", mode: "copy", overwrite: true
+ publishDir "${params.outdir}/06_maf", mode: "copy", overwrite: true
  //debug true
 
  input:
@@ -842,7 +842,7 @@ process MAF {
 
 process JOIN_MAFS {
   conda "${projectDir}/env/tsi-python.yml"
-  publishDir "${params.outdir}/24_joined_maf", mode: "copy", overwrite: true
+  publishDir "${params.outdir}/07_joined_maf", mode: "copy", overwrite: true
   //debug true
 
   input:
@@ -861,7 +861,7 @@ process JOIN_MAFS {
 // PHYLOSCANNER PART
 
 process BAM_REF_ID_CSV {
-  publishDir "${params.outdir}/25_ref_bam_id", mode: "copy", overwrite: true
+  //publishDir "${params.outdir}/ref_bam_id", mode: "copy", overwrite: true
   //debug true
 
   input:
@@ -890,7 +890,7 @@ process BAM_REF_ID_CSV {
 process PHYLOSCANNER_ALIGN_READS {
  label "phyloscanner_align_reads"
  conda "${projectDir}/env/phyloscanner.yml"
- publishDir "${params.outdir}/27_phyloscanner_aligned_reads", mode: "copy", overwrite: true 
+ //publishDir "${params.outdir}/phyloscanner_aligned_reads", mode: "copy", overwrite: true 
  //debug true
 
  input:
@@ -927,7 +927,7 @@ process PHYLOSCANNER_ALIGN_READS {
 
 
 process ALIGNED_READS_IQTREE {
-  publishDir "${params.outdir}/28_reads_all_windows", mode: "copy", overwrite: true
+  //publishDir "${params.outdir}/reads_all_windows", mode: "copy", overwrite: true
   //debug true
 
   input:
@@ -958,7 +958,7 @@ process ALIGNED_READS_IQTREE {
 process IQTREE {
   label "iqtree"
   conda "${projectDir}/env/iqtree.yml"
-  publishDir "${params.outdir}/29_iqtree_trees", mode: "copy", overwrite: true
+  //publishDir "${params.outdir}/iqtree_trees", mode: "copy", overwrite: true
   //debug true
 
  input:
@@ -982,7 +982,7 @@ process IQTREE {
 
 process PHYLOSCANNER_TREE_ANALYSIS {
  label "phyloscanner_tree_analysis"
- publishDir "${params.outdir}/30_analysed_trees", mode: "copy", overwrite: true
+ publishDir "${params.outdir}/09_patStats", mode: "copy", overwrite: true
  //debug true
 
  input:
@@ -1020,7 +1020,7 @@ process PHYLOSCANNER_TREE_ANALYSIS {
 
 process PHYLO_TSI {
   conda "${projectDir}/env/phylo_tsi.yml"
-  publishDir "${params.outdir}/31_phylo_tsi", mode: "copy", overwrite: true
+  publishDir "${params.outdir}/10_phylo_tsi", mode: "copy", overwrite: true
   //debug true
 
   input:
@@ -1043,7 +1043,7 @@ process PHYLO_TSI {
 
 process PRETTIFY_AND_PLOT {
   conda "${projectDir}/env/tsi-python.yml"
-  publishDir "${params.outdir}/31_phylo_tsi", mode: "copy", overwrite: true
+  publishDir "${params.outdir}/10_phylo_tsi", mode: "copy", overwrite: true
   debug true
 
   input:
@@ -1220,7 +1220,7 @@ workflow {
     // *******************************************************PHYLOSCANNER******'*****************************************************************
     ch_phyloscanner_csv = BAM_REF_ID_CSV ( ch_mapping_out )
     // An easy way to concatinate bam_ref_id_csv files: use collectFile() operator
-    ch_bam_ref_id_all = ch_phyloscanner_csv.collectFile( name: "phloscanner_input.csv", storeDir: "${projectDir}/${params.outdir}/26_bam_ref_id_all" )
+    ch_bam_ref_id_all = ch_phyloscanner_csv.collectFile( name: "phloscanner_input.csv", storeDir: "${projectDir}/${params.outdir}/08_bam_ref_id_all" )
     ch_mapped_out_no_id = ch_mapping_out.map {id, fasta, bam, bai, csv -> [fasta, bam, bai]}
     ch_aligned_reads = PHYLOSCANNER_ALIGN_READS ( ch_bam_ref_id_all, ch_mapped_out_no_id.flatten().collect() )
 
@@ -1245,7 +1245,7 @@ workflow {
     ch_prettified_tsi = PRETTIFY_AND_PLOT( ch_phylo_tsi )
      // Mapping notes
     ch_mapping_notes = MAPPING_NOTES( ch_mapping_args_non_reads )
-    ch_mapping_notes_all = ch_mapping_notes.collectFile(name: "mapping_report.csv", storeDir: "${projectDir}/${params.outdir}/31_phylo_tsi")
+    ch_mapping_notes_all = ch_mapping_notes.collectFile(name: "mapping_report.csv", storeDir: "${projectDir}/${params.outdir}/10_phylo_tsi")
 
     // Under development or alternative
     //ch_all_windows = EXTRACT_POSITION_EXCISED_WINDOWS ( ch_aligned_reads_positions_excised.collect() )
