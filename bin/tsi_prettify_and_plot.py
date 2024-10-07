@@ -22,6 +22,9 @@ name1 = infilename.rsplit("/")[-1] # gives a file name.csv
 # Keep only useful columns (host.id and all other which start with RF_)
 df = df.filter(regex = "^host|^RF_", axis = 1)
 
+# Remove RF_pred_sqrt
+df = df.drop("RF_pred_sqrt", axis=1)
+
 # Create "Scount" columns based on "host.id" (extract our internal ID, when long IDs are used)
 #df["Scount"] = df["host.id"].str.extract("\w+HIV(\d{2}-\d{5})_\w+", expand = True)
 df["Scount"] = df["host.id"]
@@ -33,11 +36,19 @@ df = df.iloc[:, [-1, 0] + list(range(1, df.shape[1] - 1 ))]
 df.sort_values(by=["Scount"], inplace = True)
 
 # Convert years to months
+df["RF_std"] = df["RF_std"].apply(lambda x: x*12)
+df["RF_cc025"] = df["RF_cc025"].apply(lambda x: x*12)
+df["RF_cc975"] = df["RF_cc975"].apply(lambda x: x*12)
+df["RF_pred_MAE"] = df["RF_pred_MAE"].apply(lambda x: x*12)
 df["RF_pred_linear"] = df["RF_pred_linear"].apply(lambda x: x*12)
 df["RF_pred_min_linear"] = df["RF_pred_min_linear"].apply(lambda x: x*12)
 df["RF_pred_max_linear"] = df["RF_pred_max_linear"].apply(lambda x: x*12)
 
 # Round "RF_pred_linear" values
+df["RF_std"] = df["RF_std"].apply(lambda x: round(x, 2))
+df["RF_cc025"] = df["RF_cc025"].apply(lambda x: round(x, 2))
+df["RF_cc975"] = df["RF_cc975"].apply(lambda x: round(x, 2))
+df["RF_pred_MAE"] = df["RF_pred_MAE"].apply(lambda x: round(x, 2))
 df["RF_pred_linear"] = df["RF_pred_linear"].apply(lambda x: round(x, 2))
 df["RF_pred_min_linear"] = df["RF_pred_min_linear"].apply(lambda x: round(x, 2))
 df["RF_pred_max_linear"] = df["RF_pred_max_linear"].apply(lambda x: round(x, 2))
@@ -54,7 +65,7 @@ fig, ax = plt.subplots(figsize=(16, 12))
 barplot = sns.barplot(x="RF_pred_linear", y="Scount",
                           data=df, palette="GnBu_d")
 
-# Set limits and tichs for x
+# Set limits and ticks for x
 barplot.set_xlim(0, int(df["RF_pred_linear"].max() + 7))
 barplot.set_xticks(range(0, int(df["RF_pred_linear"].max() + 7), 6))
 
