@@ -24,6 +24,10 @@ df = df.filter(regex = "^host|^RF_", axis = 1)
 
 # Remove RF_pred_sqrt
 df = df.drop("RF_pred_sqrt", axis=1)
+df = df.drop("RF_std", axis=1)
+df = df.drop("RF_cc025", axis=1)
+df = df.drop("RF_cc975", axis=1)
+df = df.drop("RF_pred_MAE", axis=1)
 
 # Create "Scount" columns based on "host.id" (extract our internal ID, when long IDs are used)
 #df["Scount"] = df["host.id"].str.extract("\w+HIV(\d{2}-\d{5})_\w+", expand = True)
@@ -36,19 +40,11 @@ df = df.iloc[:, [-1, 0] + list(range(1, df.shape[1] - 1 ))]
 df.sort_values(by=["Scount"], inplace = True)
 
 # Convert years to months
-df["RF_std"] = df["RF_std"].apply(lambda x: x*12)
-df["RF_cc025"] = df["RF_cc025"].apply(lambda x: x*12)
-df["RF_cc975"] = df["RF_cc975"].apply(lambda x: x*12)
-df["RF_pred_MAE"] = df["RF_pred_MAE"].apply(lambda x: x*12)
 df["RF_pred_linear"] = df["RF_pred_linear"].apply(lambda x: x*12)
 df["RF_pred_min_linear"] = df["RF_pred_min_linear"].apply(lambda x: x*12)
 df["RF_pred_max_linear"] = df["RF_pred_max_linear"].apply(lambda x: x*12)
 
 # Round "RF_pred_linear" values
-df["RF_std"] = df["RF_std"].apply(lambda x: round(x, 2))
-df["RF_cc025"] = df["RF_cc025"].apply(lambda x: round(x, 2))
-df["RF_cc975"] = df["RF_cc975"].apply(lambda x: round(x, 2))
-df["RF_pred_MAE"] = df["RF_pred_MAE"].apply(lambda x: round(x, 2))
 df["RF_pred_linear"] = df["RF_pred_linear"].apply(lambda x: round(x, 2))
 df["RF_pred_min_linear"] = df["RF_pred_min_linear"].apply(lambda x: round(x, 2))
 df["RF_pred_max_linear"] = df["RF_pred_max_linear"].apply(lambda x: round(x, 2))
