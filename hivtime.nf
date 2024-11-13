@@ -398,7 +398,9 @@ process MULTIQC {
     path report_files
 
   output:
-    path "multiqc_report.html"
+    path "multiqc_report.html",                        emit: Report
+    path "multiqc_data/multiqc_data.json",             emit: Json
+    path "multiqc_data/multiqc_general_stats.txt",     emit: Txt
  
   script:
   """
