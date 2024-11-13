@@ -239,6 +239,9 @@ process ALIENTRIMMER {
        -z
 
   rm -f ${id}_alientrimmer.R.S.fastq.gz
+
+  mv ${id}_alientrimmer.R.1.fastq.gz ${id}_alientrimmer.R1.fastq.gz
+  mv ${id}_alientrimmer.R.2.fastq.gz ${id}_alientrimmer.R2.fastq.gz
   """
   
   } else if (params.mode == "single") {
