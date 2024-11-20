@@ -24,7 +24,7 @@ Make sure that R with the phyloscannerR package installed globally. All other so
 
 Download Kraken2 database, we currently use kraken2_nt_20231129.
 
-Then use the path to kraken DB for the parameter --krakendb.
+Then use the path to kraken DB for the parameter **--krakendb**.
 
 Make it default by krakendb = "/yourlocation/kraken2_nt_20231129"
 
@@ -34,7 +34,7 @@ Alternativelly, one can install all the tools manually, using .yml recipes (see 
 
 ## Usage
 
-We recommend to install mamba for quicker installation process (in base env)
+We recommend to install mamba for a quicker installation process (in base env)
 
 ```sh
 conda install mamba -c conda-forge
@@ -51,7 +51,7 @@ Activate the *nextflow* environment:
 conda activate nextflow
 ```
 
-Run the pipeline (example run, for more information use --help): 
+Run the pipeline (example run, for more information use **--help**): 
 
 ```sh
 nextflow hivtime.nf \
