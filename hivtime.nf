@@ -1214,7 +1214,7 @@ workflow {
     ch_merged_reads = MERGE ( ch_classified_reads.UnclassifiedFastq.combine( ch_filtered_reads, by:0 ) )
     ch_kraken_fastqc = KRAKEN_FASTQC ( ch_merged_reads )    
     ch_multiqc = MULTIQC ( ch_raw_fastqc.Zip.concat(ch_fastp_fastqc.Zip).concat(ch_alientrimmer_fastqc.Zip).concat(ch_kraken_fastqc.Zip).collect() )
-    ch_multiqc_report = MULTIQC ( ch_multiqc.Txt)
+    ch_multiqc_report = MULTIQC_READS_REPORT ( ch_multiqc.Txt)
     // Contig generation
     ch_spades = SPADES ( ch_merged_reads )
     ch_metaspades = METASPADES ( ch_merged_reads )
