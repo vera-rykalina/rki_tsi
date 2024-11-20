@@ -1086,6 +1086,22 @@ process MAPPING_NOTES {
   }
 }
 
+process MULTIQC_READS_REPORT {
+  conda "/scratch/rykalinav/rki_tsi/conda/tsi-python-6867e81a1af62412c6cb884074ce298e"
+  publishDir "${params.outdir}/10_phylo_tsi", mode: "copy", overwrite: true
+  debug true
+
+  input:
+    path multiqc_txt
+
+  output:
+    path "multiqc_report.csv"
+   
+  script:
+    """
+    multiqc_parser.py -i ${multiqc_txt} -p multiqc_report.csv 
+    """ 
+}
 
 process PHYLOSCANNER_NORMALISATION {
   label "normalisation"
@@ -1198,7 +1214,8 @@ workflow {
     ch_merged_reads = MERGE ( ch_classified_reads.UnclassifiedFastq.combine( ch_filtered_reads, by:0 ) )
     ch_kraken_fastqc = KRAKEN_FASTQC ( ch_merged_reads )    
     ch_multiqc = MULTIQC ( ch_raw_fastqc.Zip.concat(ch_fastp_fastqc.Zip).concat(ch_alientrimmer_fastqc.Zip).concat(ch_kraken_fastqc.Zip).collect() )
-
+    ch_multiqc_report = MULTIQC ( ch_multiqc.Txt)
+    // Contig generation
     ch_spades = SPADES ( ch_merged_reads )
     ch_metaspades = METASPADES ( ch_merged_reads )
     // Combine according to a key that is the first value of every first element, which is a list
