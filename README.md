@@ -2,7 +2,7 @@
 This is a seamless pipeline developed to automate HIV-phyloTSI method. The [method](https://www.medrxiv.org/content/10.1101/2022.05.15.22275117v1) is meant to estimate time since infection (TSI) from HIV deep-sequencing data. Here is a link for the HIV-phyloTSI GitHub [page](https://github.com/BDI-pathogens/HIV-phyloTSI/tree/main).
 
 ## Pipeline workflow
-![Plot](/home/rykalinav/scratch/rki_tsi/images/HIVtime.png)
+![Plot](/images/HIVtime.png)
 
 ## Tools
 The pipeline includes the following tools:
