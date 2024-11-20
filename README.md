@@ -61,7 +61,6 @@ nextflow hivtime.nf \
  -profile rki_slurm,rki_mamba \
 --krakendb /path_to_krakendb/kraken2_nt_20231129/ \
 --mode paired \
---alignment ../rki_tsi/data/alignments/HIV1_COM_2022_genome_DNA.fasta \
 --primers ../rki_tsi/data/primers/primers_GallEtAl2012.fasta \
 -resume (optional)
 ```
