@@ -7,6 +7,8 @@ This is a seamless pipeline developed to automate HIV-phyloTSI method. The [meth
 ## Tools
 The pipeline includes the following tools:
 - KRAKEN2
+- FASTP
+- ALIENTRIMMER
 - FASTQC
 - MULTIQC
 - SPADES
@@ -57,7 +59,7 @@ nextflow hivtime.nf \
  --outdir Results \
  --fastq "/path_to_your_fastq_files/*R{1,2}*.fastq.gz" \
  -profile rki_slurm,rki_mamba \
---krakendb /pathe_to_krakendb/kraken2_nt_20231129/ \
+--krakendb /path_to_krakendb/kraken2_nt_20231129/ \
 --mode paired \
 --alignment ../rki_tsi/data/alignments/HIV1_COM_2022_genome_DNA.fasta \
 --primers ../rki_tsi/data/primers/primers_GallEtAl2012.fasta \
