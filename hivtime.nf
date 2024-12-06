@@ -1090,7 +1090,7 @@ process MAPPING_NOTES {
 }
 
 process MULTIQC_READS_REPORT {
-  conda "/scratch/rykalinav/rki_tsi/conda/tsi-python-6867e81a1af62412c6cb884074ce298e"
+  conda "${projectDir}/env/tsi-python.yml"
   publishDir "${params.outdir}/10_phylo_tsi", mode: "copy", overwrite: true
   debug true
 
