@@ -586,16 +586,18 @@ process FASTQ_RENAME_HEADER {
    if (params.mode == "paired") {
    """
    zcat ${reads[0]} |\
-      awk '{if (NR%4 == 1) {print \$1 "/" \$2} else print}' |\
-      sed 's/:N:.*//' |\
-      gzip -c > ${id}_renamed_R1.fastq.gz
+     sed 's/:N:0:.*//' |\
+     awk '{if (NR%4 == 1) {print \$1 "/" \$2} else print}' |\
+     awk '{if (NR%4 == 1)  gsub("/1/","/1",\$1) }1' |\
+     gzip -c > ${id}_renamed_R1.fastq.gz
    
    rm ${reads[0]}
 
    
     zcat ${reads[1]} |\
+      sed 's/:N:0:.*//' |\
       awk '{if (NR%4 == 1) {print \$1 "/" \$2} else print}' |\
-      sed 's/:N:.*//' |\
+      awk '{if (NR%4 == 1)  gsub("/2/","/2",\$1) }1' |\
       gzip -c > ${id}_renamed_R2.fastq.gz
   
    rm ${reads[1]}
@@ -603,8 +605,9 @@ process FASTQ_RENAME_HEADER {
 } else if (params.mode == "single") {
       """
       zcat ${reads[0]} |\
+      sed 's/:N:0:.*//' |\
       awk '{if (NR%4 == 1) {print \$1 "/" \$2} else print}' |\
-      sed 's/:N:.*//' |\
+      awk '{if (NR%4 == 1)  gsub("/1/","/1",\$1) }1' |\
       gzip -c > ${id}_renamed_R1.fastq.gz
 
     rm ${reads[0]}
@@ -1099,7 +1102,7 @@ process MULTIQC_READS_REPORT {
    
   script:
     """
-    multiqc_parser.py -i ${multiqc_txt} -p multiqc_report.csv 
+    multiqc_parser.py -i ${multiqc_txt} -o multiqc_report.csv 
     """ 
 }
 
