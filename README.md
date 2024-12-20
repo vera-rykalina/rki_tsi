@@ -20,13 +20,13 @@ The pipeline includes the following tools:
 - HIV-phyloTSI (T. Golubchik)
 
 ## Installation
-Make sure that R with the phyloscannerR package installed globally. All other software tools with their dependencies get installed automatically via conda directives. 
+Make sure that R with the phyloscannerR package installed globally (I am working on it to automate it as well). All other software tools with their dependencies get installed automatically via conda directives. 
 
 Download Kraken2 database, we currently use kraken2_nt_20231129.
 
 Then use the path to kraken DB for the parameter **--krakendb**.
 
-Make it default by krakendb = "/yourlocation/kraken2_nt_20231129"
+Or make it default: krakendb = "/yourlocation/kraken2_nt_20231129"
 
 The [database](https://benlangmead.github.io/aws-indexes/k2) used by the pipeline is nt Database (29 November, 2023) which is stored within HPC resources. 
 
