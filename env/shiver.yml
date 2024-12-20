@@ -1,7 +1,7 @@
 channels:
   - bioconda
   - conda-forge
-  - defaults
+  - pypi
 dependencies:
   - python=3.6
   - bzip2
@@ -15,6 +15,7 @@ dependencies:
   - bowtie2=2.3.3.1
   - samtools=1.6
   - blast=2.7.1
+  - pyfastaq
   - pip
   - pip:
     - pyfastaq
