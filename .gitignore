@@ -3,7 +3,7 @@
 work/
 conda/
 HTML/*
-Results
+Results*
 output/
 output_pe/
 output_se/
@@ -11,6 +11,7 @@ single_reads/
 paired_reads/
 shiver/
 phyloscanner/
+HIV-phyloTSI/
 output_pe_kraken_filter/
 shiver_align_mafft_7.525.command.log
 fl_fr_reads/
