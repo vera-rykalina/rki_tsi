@@ -1106,81 +1106,23 @@ process MULTIQC_READS_REPORT {
     """ 
 }
 
-process PHYLOSCANNER_NORMALISATION {
-  label "normalisation"
-  conda "${projectDir}/env/phyloscanner.yml"
-  publishDir "${params.outdir}/32_normalisation", mode: "copy", overwrite: true
-  debug true
+// Attempt to automate installation of phyloscannerR (under development)
+process PHYLOSCANNER_R_INSTALL {
+  conda "${projectDir}/env/phyloscannerR.yml"
   debug true
 
   input:
-    path (alignment)
-    
-  output:
-    path "*.csv"
-  
-  script:
-   
-    """
-    python ${params.normalisation} \
-    ${alignment} \
-    B.FR.83.HXB2_LAI_IIIB_BRU.K03455 \
-    520 \
-    251 \
-    HIV_COM_2022_genome_DNA_SizeInWindows \
-    --x-iqtree "${params.iqtreeargs}" \
-    --end 9460 \
-    -I 10
-    """
-}
-process EXTRACT_POSITION_EXCISED_WINDOWS {
-  //publishDir "${params.outdir}/31_position_excised_windows", mode: "copy", overwrite: true
-  //debug true
 
-  input:
-    path (fasta)
- 
- 
-    
   output:
-    path ("windows.txt")
-    
-  
-  script:
-   
-    """
-     for i in AlignedReadsInWindow_PositionsExcised*; do
-       window=\$(basename "\${i%.fasta}" | cut -d '_' -f3- );
-       echo "\${window}";
-     done >> windows.txt
-    """
-}
-process EXTRACT_ALIGNED_READS {
-  //publishDir "${params.outdir}/32_position__non_excised_windows", mode: "copy", overwrite: true
-  //debug true
-
-  input:
-    path (windows)
-    path (fastas)
-    
-  output:
-    path ("Filtered*.fasta")
-    
-  
+    stdout
   script:
     """
-
-    for fasta in ${fastas}; do
-    mv \${fasta} Filtered\${fasta};
-    done
-
-  
-    for window in \$(cat ${windows}); do
-    rm FilteredAlignedReadsInWindow_\${window}.fasta;
-    done
-    """
+    #!/usr/bin/env Rscript
+    
+    library(devtools)
+    install("${projectDir}/software/phyloscannerR", dependencies = T)
+    """ 
 }
-
 
 
 
@@ -1265,57 +1207,12 @@ workflow {
     ch_aligned_reads_iqtree = ALIGNED_READS_IQTREE ( ch_grouped_aligned_reads )
     ch_iqtree = IQTREE ( ch_aligned_reads_iqtree  )
     ch_analysed_trees = PHYLOSCANNER_TREE_ANALYSIS ( ch_iqtree.Treefile.collect() )
-    // HIVPhyloTSI
+    // *******************************************************HIVPhyloTSI*****************************************************************
     ch_phylo_tsi = PHYLO_TSI( ch_analysed_trees.patstat_csv, ch_joined_maf )
     ch_prettified_tsi = PRETTIFY_AND_PLOT( ch_phylo_tsi )
      // Mapping notes
     ch_mapping_notes = MAPPING_NOTES( ch_mapping_args_non_reads )
     ch_mapping_notes_all = ch_mapping_notes.collectFile(name: "mapping_report.csv", storeDir: "${projectDir}/${params.outdir}/10_phylo_tsi")
 
-    // Under development or alternative
-    //ch_all_windows = EXTRACT_POSITION_EXCISED_WINDOWS ( ch_aligned_reads_positions_excised.collect() )
-    //ch_filtered_aligned_reads = EXTRACT_ALIGNED_READS ( ch_all_windows, ch_all_aligned_reads.collect())
-    // Normalisation for phyloscanner (for option --normRefFileName)
-    //ch_ref_normalisation = PHYLOSCANNER_NORMALISATION ( params.alignment ) 
 }
 
-
-
-
-
-// fastaq primer trimming
-//fastaq sequence_trim 07-00462_fastp.R1.fastq.gz 07-00462_fastp.R2.fastq.gz 07-00462_fastp_trimmed.R1.fastq.gz \
-//07-00462_fastp_trimmed.R2.fastq.gz../../../DataShiverInit/primers_GallEtAl2012.fasta --revcomp
-
-// cd-hit-est -i reads.fa -o output.fa -c 0.9 -n 10 -d 999
-
-/*
--c <infile>
-This option allows the alien sequence file to be indicated. Each alien oligonucleotide sequence must be
-written in one line, and may not exceed 32,500 nucleotides. Standard degenerate bases are admitted, i.e.
-character states M, R, W, S, Y, K, B, D, H, V, N, and X. Lines beginning by the characters ‘#’, ‘%’ or
-‘>’ are not considered. Input file name may not be a number (see last page). */
-
-/*  ./../tools/CalculateTreeSizeInGenomeWindows.py \
-../../data/alignments/HIV1_COM_2022_genome_DNA.fasta \ 
-B.FR.83.HXB2_LAI_IIIB_BRU.K03455 \
-500 \
-250 \
-HIV_COM_2022_genome_DNA_SizeInWindows \
---x-iqtree "iqtree -m GTR+F+R6 -nt 2 --seed 0" \ 
---end 9460 \ 
--T 2 \ 
--I 10
-*/
-
-
-/*
-
-  for file in AlignedReadsInWindow_*_to_*; do
-     window="${all_windows.getSimpleName().split("InWindow_")[1]}";
-     if [[ AlignedReadsInWindow_PositionsExcised_\${window}.fasta ]]
-     then 
-         rm AlignedReadsInWindow_\${window}.fasta
-     fi
-    done 
-*/
