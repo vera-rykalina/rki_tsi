@@ -35,21 +35,6 @@ params.alignment = "${projectDir}/data/alignments/HIV1_COM_2022_genome_DNA.fasta
 //primers = params.primers
 
 
-
-// Parameters for phyloscanner
-params.two_refs = "${projectDir}/data/refs/2refs_HXB2_C.BW.fasta"
-params.excision_coordinates = "${projectDir}/data/phyloscanner/DrugResistancePositionsInHXB2.txt"
-params.windows_oneline = "${projectDir}/data/phyloscanner/windows250_VR_norms_oneline.txt"
-params.hiv_distance_normalisation = "${projectDir}/data/phyloscanner/HIV_DistanceNormalisationOverGenome.csv"
-params.k = 15
-
-// Parameters for HIV-PhyloTSI
-params.model = "${projectDir}/bin/Model"
-
-params.normalisation = "${projectDir}/bin/tools/CalculateTreeSizeInGenomeWindows.py"
-
-
-
 // help message
 params.help = false
 
