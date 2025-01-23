@@ -987,8 +987,26 @@ process IQTREE {
  """ 
 }
 
+process PHYLOSCANNER_R_INSTALL {
+  conda "${projectDir}/env/phyloscannerR.yml"
+  debug true
+
+  input:
+
+  output:
+    stdout
+  script:
+    """
+    #!/usr/bin/env Rscript
+    
+    library(devtools)
+    install("${projectDir}/software/phyloscannerR", dependencies = T)
+    """ 
+}
+
 
 process PHYLOSCANNER_TREE_ANALYSIS {
+ conda "${projectDir}/conda/phyloscannerR*"
  label "phyloscanner_tree_analysis"
  publishDir "${params.outdir}/09_patStats", mode: "copy", overwrite: true
  //debug true
@@ -1123,7 +1141,6 @@ process PHYLOSCANNER_R_INSTALL {
     install("${projectDir}/software/phyloscannerR", dependencies = T)
     """ 
 }
-
 
 
 // ****************************************************INPUT CHANNELS**********************************************************
