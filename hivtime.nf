@@ -1223,6 +1223,7 @@ workflow {
 
     ch_aligned_reads_iqtree = ALIGNED_READS_IQTREE ( ch_grouped_aligned_reads )
     ch_iqtree = IQTREE ( ch_aligned_reads_iqtree  )
+    ch_phloscannerR_installation = PHYLOSCANNER_R_INSTALL()
     ch_analysed_trees = PHYLOSCANNER_TREE_ANALYSIS ( ch_iqtree.Treefile.collect() )
     // *******************************************************HIVPhyloTSI*****************************************************************
     ch_phylo_tsi = PHYLO_TSI( ch_analysed_trees.patstat_csv, ch_joined_maf )
