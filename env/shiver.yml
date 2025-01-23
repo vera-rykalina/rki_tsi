@@ -1,23 +1,18 @@
 channels:
   - bioconda
   - conda-forge
-  - pypi
 dependencies:
-  - python=3.6
-  - bzip2
-  - mafft=7.515
-  - trimmomatic
-  - smalt=0.7.6
-  - picard=2.18
-  - bwa
-  - picard=2.18
-  - biopython=1.76
-  - bowtie2=2.3.3.1
-  - samtools=1.6
-  - blast=2.7.1
-  - pyfastaq
-  - pip
-  - pip:
-    - pyfastaq
-    - six
-    - pandas
+  - python >= 3.6
+  - bzip2 = 1.0.8
+  - mafft = 7.515
+  - trimmomatic = 0.39
+  - smalt = 0.7.6
+  - picard = 2.18
+  - bwa = 0.7.17
+  - picard = 2.18
+  - biopython = 1.76
+  - bowtie2 = 2.3.3.1
+  - samtools = 1.6
+  - blast = 2.7.1
+  - pyfastaq = 3.17.0
+  - pandas = 1.1.5

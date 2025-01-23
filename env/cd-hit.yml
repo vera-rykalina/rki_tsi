@@ -2,4 +2,4 @@ channels:
  - bioconda
  - conda-forge
 dependencies:
- - cd-hit
+ - cd-hit = 4.8.1
