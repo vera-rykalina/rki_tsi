@@ -1,10 +1,11 @@
 channels:
   - conda-forge
+  - anaconda
   - bioconda
-  - pypi
-  - defaults
 dependencies:
-  - python=3.7
-  - pandas=0.25
-  - scikit-learn=0.22
-  - numpy
+  - python = 3.7
+  - pandas = 0.25
+  - scikit-learn = 0.22
+  - numpy = 1.21
+  - matplotlib = 3.5
+  - seaborn = 0.12
