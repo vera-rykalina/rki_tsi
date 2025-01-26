@@ -16,9 +16,6 @@ nextflow.enable.dsl = 2
 
 
 //**************************************************PARAMETERS*******************************************************
-// Change is required! Specify your projectDir here
-projectDir = "/scratch/rykalinav/rki_tsi"
-
 // Parameters for kraken
 //krakendb = params.krakendb
 
@@ -826,7 +823,7 @@ process SHIVER_MAP {
 
 
 process MAF {
- conda "${projectDir}/env/tsi-python.yml"
+ conda "${projectDir}/env/phylo_tsi.yml"
  publishDir "${params.outdir}/06_maf", mode: "copy", overwrite: true
  //debug true
 
@@ -849,7 +846,7 @@ process MAF {
 }
 
 process JOIN_MAFS {
-  conda "${projectDir}/env/tsi-python.yml"
+  conda "${projectDir}/env/phylo_tsi.yml"
   publishDir "${params.outdir}/07_joined_maf", mode: "copy", overwrite: true
   //debug true
 
@@ -965,7 +962,7 @@ process ALIGNED_READS_IQTREE {
 
 process IQTREE {
   label "iqtree"
-  conda "${projectDir}/env/iqtree.yml"
+  conda "${projectDir}/env/phyloscanner.yml"
   //publishDir "${params.outdir}/iqtree_trees", mode: "copy", overwrite: true
   //debug true
 
@@ -982,34 +979,18 @@ process IQTREE {
      -s ${fasta} \
      -pre IQTREE_bestTree.InWindow_${window} \
      -m GTR+F+R6 \
-     -nt ${task.cpus} \
+     -nt 2 \
      --seed 1
  """ 
-}
-
-process PHYLOSCANNER_R_INSTALL {
-  conda "${projectDir}/env/phyloscannerR.yml"
-  debug true
-
-  input:
-
-  output:
-    stdout
-  script:
-    """
-    #!/usr/bin/env Rscript
-    
-    library(devtools)
-    install("${projectDir}/software/phyloscannerR", dependencies = T)
-    """ 
+ // -nt ${task.cpus} \
+ // -nt 2 (for full-length) and -nt 1 (for pol only)
 }
 
 
 process PHYLOSCANNER_TREE_ANALYSIS {
- conda "${projectDir}/conda/phyloscannerR*"
- label "phyloscanner_tree_analysis"
- publishDir "${params.outdir}/09_patStats", mode: "copy", overwrite: true
- //debug true
+  label "phyloscanner_tree_analysis"
+  publishDir "${params.outdir}/09_patStats", mode: "copy", overwrite: true
+  //debug true
 
  input:
   path treefile
@@ -1068,7 +1049,7 @@ process PHYLO_TSI {
 }
 
 process PRETTIFY_AND_PLOT {
-  conda "${projectDir}/env/tsi-python.yml"
+  conda "${projectDir}/env/phylo_tsi.yml"
   publishDir "${params.outdir}/10_phylo_tsi", mode: "copy", overwrite: true
   debug true
 
@@ -1108,7 +1089,7 @@ process MAPPING_NOTES {
 }
 
 process MULTIQC_READS_REPORT {
-  conda "${projectDir}/env/tsi-python.yml"
+  conda "${projectDir}/env/phylo_tsi.yml"
   publishDir "${params.outdir}/10_phylo_tsi", mode: "copy", overwrite: true
   debug true
 
@@ -1121,24 +1102,6 @@ process MULTIQC_READS_REPORT {
   script:
     """
     multiqc_parser.py -i ${multiqc_txt} -o multiqc_report.csv 
-    """ 
-}
-
-// Attempt to automate installation of phyloscannerR (under development)
-process PHYLOSCANNER_R_INSTALL {
-  conda "${projectDir}/env/phyloscannerR.yml"
-  debug true
-
-  input:
-
-  output:
-    stdout
-  script:
-    """
-    #!/usr/bin/env Rscript
-    
-    library(devtools)
-    install("${projectDir}/software/phyloscannerR", dependencies = T)
     """ 
 }
 
@@ -1223,14 +1186,33 @@ workflow {
 
     ch_aligned_reads_iqtree = ALIGNED_READS_IQTREE ( ch_grouped_aligned_reads )
     ch_iqtree = IQTREE ( ch_aligned_reads_iqtree  )
-    ch_phloscannerR_installation = PHYLOSCANNER_R_INSTALL()
-    ch_analysed_trees = PHYLOSCANNER_TREE_ANALYSIS ( ch_iqtree.Treefile.collect() )
+    ch_install_phyloscannerR = PHYLOSCANNER_R_INSTALL ()
+    //ch_analysed_trees = PHYLOSCANNER_TREE_ANALYSIS ( ch_iqtree.Treefile.collect() )
     // *******************************************************HIVPhyloTSI*****************************************************************
-    ch_phylo_tsi = PHYLO_TSI( ch_analysed_trees.patstat_csv, ch_joined_maf )
-    ch_prettified_tsi = PRETTIFY_AND_PLOT( ch_phylo_tsi )
-     // Mapping notes
+    //ch_phylo_tsi = PHYLO_TSI( ch_analysed_trees.patstat_csv, ch_joined_maf )
+    //ch_prettified_tsi = PRETTIFY_AND_PLOT( ch_phylo_tsi )
+    // Mapping notes
     ch_mapping_notes = MAPPING_NOTES( ch_mapping_args_non_reads )
     ch_mapping_notes_all = ch_mapping_notes.collectFile(name: "mapping_report.csv", storeDir: "${projectDir}/${params.outdir}/10_phylo_tsi")
 
 }
 
+
+/*
+process PHYLOSCANNER_R_INSTALL {
+  conda "${projectDir}/env/phyloscannerR.yml"
+  
+  input:
+  output:
+   stdout
+
+  script:
+    """
+    #!/usr/bin/env Rscript
+  
+    library(devtools)
+    devtools::install_github("BDI-pathogens/phyloscanner/phyloscannerR", ref = "v1.9.2", dependencies=T)
+    """ 
+    //install("${projectDir}/software/phyloscannerR", dependencies=T)
+}
+*/
