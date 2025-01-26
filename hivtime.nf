@@ -1186,11 +1186,10 @@ workflow {
 
     ch_aligned_reads_iqtree = ALIGNED_READS_IQTREE ( ch_grouped_aligned_reads )
     ch_iqtree = IQTREE ( ch_aligned_reads_iqtree  )
-    ch_install_phyloscannerR = PHYLOSCANNER_R_INSTALL ()
-    //ch_analysed_trees = PHYLOSCANNER_TREE_ANALYSIS ( ch_iqtree.Treefile.collect() )
+    ch_analysed_trees = PHYLOSCANNER_TREE_ANALYSIS ( ch_iqtree.Treefile.collect() )
     // *******************************************************HIVPhyloTSI*****************************************************************
-    //ch_phylo_tsi = PHYLO_TSI( ch_analysed_trees.patstat_csv, ch_joined_maf )
-    //ch_prettified_tsi = PRETTIFY_AND_PLOT( ch_phylo_tsi )
+    ch_phylo_tsi = PHYLO_TSI( ch_analysed_trees.patstat_csv, ch_joined_maf )
+    ch_prettified_tsi = PRETTIFY_AND_PLOT( ch_phylo_tsi )
     // Mapping notes
     ch_mapping_notes = MAPPING_NOTES( ch_mapping_args_non_reads )
     ch_mapping_notes_all = ch_mapping_notes.collectFile(name: "mapping_report.csv", storeDir: "${projectDir}/${params.outdir}/10_phylo_tsi")
@@ -1198,7 +1197,12 @@ workflow {
 }
 
 
+// ----------------Under development---------------- 
 /*
+r-igraph to be updated in conda-forge (CRAN update 25.01.2025)
+
+ch_install_phyloscannerR = PHYLOSCANNER_R_INSTALL ()
+
 process PHYLOSCANNER_R_INSTALL {
   conda "${projectDir}/env/phyloscannerR.yml"
   
@@ -1216,3 +1220,4 @@ process PHYLOSCANNER_R_INSTALL {
     //install("${projectDir}/software/phyloscannerR", dependencies=T)
 }
 */
+ 
