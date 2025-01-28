@@ -5,18 +5,19 @@ nextflow.enable.dsl = 2
 /* nextflow hivtime.nf \
 -c hivtime_profile.config 
 --outdir output_pe
---fastq "/scratch/rykalinav/rki_tsi/paired_reads/*R{1,2}*.fastq.gz" 
+--fastq "/path/rki_tsi/paired_reads/*R{1,2}*.fastq.gz" 
 -profile rki_slurm,rki_mamba \
---krakendb /scratch/databases/kraken2_nt_20231129/ \
+--krakendb /path/databases/kraken2/kraken2_nt_20231129/ \
 --mode paired 
---alignment /scratch/rykalinav/rki_tsi/data/HIV1_COM_2022_genome_DNA.fasta \
---primers /scratch/rykalinav/rki_tsi/data/primers/primers_GallEtAl2012.fasta \
+--alignment /path/rki_tsi/data/HIV1_COM_2022_genome_DNA.fasta \
+--primers /path/rki_tsi/data/primers/primers_GallEtAl2012.fasta \
 -resume
 */
 
 
 //**************************************************PARAMETERS*******************************************************
 // Parameters for kraken
+// a newer db: kraken2_nt_20240904
 //krakendb = params.krakendb
 
 // taxid of HIV-1 
