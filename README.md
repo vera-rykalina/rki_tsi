@@ -37,7 +37,7 @@ Alternativelly, one can install all the tools manually, using .yml recipes (see 
 We recommend to install mamba for a quicker installation process (in base env)
 
 ```sh
-conda install mamba -c conda-forge
+conda install mamba -n base -c conda-forge
 ```
 
 Create a nextflow environment, using **nextflow.yml** file:
