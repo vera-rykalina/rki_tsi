@@ -241,6 +241,8 @@ process ALIENTRIMMER {
        -a ${params.primers} \
        -o ${id}_alientrimmer.R \
        -k 15 \
+       -l 80 \
+       -q 20 \
        -z
 
   rm -f ${id}_alientrimmer.R.S.fastq.gz
@@ -256,6 +258,8 @@ process ALIENTRIMMER {
            -a ${params.primers} \
            -o ${id}_alientrimmer.R \
            -k 15 \
+           -l 80 \
+           -q 20 \
            -z
     mv ${id}_alientrimmer.R.fastq.gz ${id}_alientrimmer.R1.fastq.gz
     """
