@@ -43,6 +43,7 @@ params.k = 15
 
 // Parameters for HIV-PhyloTSI
 params.model = "${projectDir}/bin/Model"
+params.seqprotocol = "amplicons"
 
 params.normalisation = "${projectDir}/bin/tools/CalculateTreeSizeInGenomeWindows.py"
 
@@ -71,11 +72,10 @@ if ( ! (params.mode in modes) ) {
 }
 
 Set seqprotocols = ['amplicons', 'capture']
-if ( ! (params.seqprotocol in seqprotocolss) ) {
+if ( ! (params.seqprotocol in seqprotocols) ) {
     exit 1, "Unknown mode. Choose from " + seqprotocols
 }
 
-params.seqprotocol = "amplicons"
 
 if ( !params.fastq ) {
     exit 1, "Missing input, use [--fastq]"
