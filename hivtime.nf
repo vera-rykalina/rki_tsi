@@ -230,7 +230,7 @@ process ALIENTRIMMER {
     tuple val(id), path("${id}_alientrimmer.R*.fastq.gz")
 
   
-
+ // Add options: -l 80 \ -q 20 \ 
   script:
 
   if (params.mode == "paired"){
