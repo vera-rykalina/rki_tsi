@@ -2,9 +2,17 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - r-base >= 4.4
-  - r-devtools
-  - r-biocmanager
-  - bioconductor-ggtree
-  - bioconductor-rbgl
-
+  - gfortran = 14.2.0
+  - glpk = 5.0
+  - libxml2 = 2.13.5
+  - zlib = 1.3.1
+  - backports.lzma = 0.0.14
+  - r-base = 4.4.2
+  - r-devtools = 2.4.5
+  - r-biocmanager = 1.30.25
+  - bioconductor-ggtree = 3.14.0
+  - bioconductor-rbgl = 1.82.0
+  - r-data.table = 1.16.4 
+  - r-phangorn = 2.12.1
+  - r-phytools = 2.4_4
+  - r-prodlim = 2024.06.25
