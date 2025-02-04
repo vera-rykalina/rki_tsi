@@ -999,12 +999,33 @@ process IQTREE {
 }
 
 
+process PHYLOSCANNER_R_INSTALL {
+  conda "${projectDir}/env/phyloscannerR.yml"
+  
+  input:
+
+  output:
+   path "emptyfile.csv"
+
+  script:
+    """
+    #!/usr/bin/env Rscript
+  
+    library(devtools)
+    devtools::install_github("BDI-pathogens/phyloscanner/phyloscannerR", ref = "v1.9.2", dependencies=T)
+    file.create("emptyfile.csv")
+    """ 
+}
+
+
 process PHYLOSCANNER_TREE_ANALYSIS {
+  conda "${projectDir}/env/phyloscannerR.yml"
   label "phyloscanner_tree_analysis"
   publishDir "${params.outdir}/09_patStats", mode: "copy", overwrite: true
   //debug true
 
  input:
+  path emptyfile
   path treefile
 
  output:
@@ -1175,7 +1196,7 @@ workflow {
     ch_mapping_out = SHIVER_MAP ( ch_initdir.InitDir, ch_mapping_args_non_reads, ch_mapping_args_reads )
      // *********************************************************MAF*********************************************************************
     ch_maf_out = MAF ( ch_mapping_out )
-    ch_hxb2_maf = ch_ref_hxb2.combine(ch_maf_out.collect())
+    ch_hxb2_maf = ch_ref_hxb2.combine( ch_maf_out.collect() )
     ch_joined_maf = JOIN_MAFS ( ch_hxb2_maf )
     // *******************************************************PHYLOSCANNER******'*****************************************************************
     ch_phyloscanner_csv = BAM_REF_ID_CSV ( ch_mapping_out )
@@ -1189,48 +1210,23 @@ workflow {
     ch_aligned_reads_positions_excised = ch_aligned_reads.AlignedReads.flatten().filter(~/.*PositionsExcised.*/)
 
     ch_window_all_reads = ch_all_aligned_reads
-        .map {it -> tuple (it.getSimpleName().split("InWindow_")[1], it ) }
+        .map { it -> tuple (it.getSimpleName().split("InWindow_")[1], it ) }
 
     ch_window_pos_exc_reads = ch_aligned_reads_positions_excised
         .map { it -> tuple (it.getSimpleName().split("_PositionsExcised_")[1], it) }
     
-    ch_grouped_aligned_reads = ch_window_all_reads.concat(ch_window_pos_exc_reads)
+    ch_grouped_aligned_reads = ch_window_all_reads.concat( ch_window_pos_exc_reads )
         .groupTuple(remainder: true)
 
     ch_aligned_reads_iqtree = ALIGNED_READS_IQTREE ( ch_grouped_aligned_reads )
     ch_iqtree = IQTREE ( ch_aligned_reads_iqtree  )
-    ch_analysed_trees = PHYLOSCANNER_TREE_ANALYSIS ( ch_iqtree.Treefile.collect() )
+    ch_install_phyloscannerR = PHYLOSCANNER_R_INSTALL ( )
+    ch_analysed_trees = PHYLOSCANNER_TREE_ANALYSIS ( ch_install_phyloscannerR, ch_iqtree.Treefile.collect() )
     // *******************************************************HIVPhyloTSI*****************************************************************
-    ch_phylo_tsi = PHYLO_TSI( ch_analysed_trees.patstat_csv, ch_joined_maf )
-    ch_prettified_tsi = PRETTIFY_AND_PLOT( ch_phylo_tsi )
+    ch_phylo_tsi = PHYLO_TSI ( ch_analysed_trees.patstat_csv, ch_joined_maf )
+    ch_prettified_tsi = PRETTIFY_AND_PLOT ( ch_phylo_tsi )
     // Mapping notes
-    ch_mapping_notes = MAPPING_NOTES( ch_mapping_args_non_reads )
-    ch_mapping_notes_all = ch_mapping_notes.collectFile(name: "mapping_report.csv", storeDir: "${projectDir}/${params.outdir}/10_phylo_tsi")
+    ch_mapping_notes = MAPPING_NOTES ( ch_mapping_args_non_reads )
+    ch_mapping_notes_all = ch_mapping_notes.collectFile( name: "mapping_report.csv", storeDir: "${projectDir}/${params.outdir}/10_phylo_tsi" )
 
 }
-
-
-// ----------------Under development---------------- 
-/*
-r-igraph to be updated in conda-forge (CRAN update 25.01.2025)
-
-ch_install_phyloscannerR = PHYLOSCANNER_R_INSTALL ()
-
-process PHYLOSCANNER_R_INSTALL {
-  conda "${projectDir}/env/phyloscannerR.yml"
-  
-  input:
-  output:
-   stdout
-
-  script:
-    """
-    #!/usr/bin/env Rscript
-  
-    library(devtools)
-    devtools::install_github("BDI-pathogens/phyloscanner/phyloscannerR", ref = "v1.9.2", dependencies=T)
-    """ 
-    //install("${projectDir}/software/phyloscannerR", dependencies=T)
-}
-*/
- 
