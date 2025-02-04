@@ -1166,14 +1166,25 @@ workflow {
     ch_raw_fastqc = RAW_FASTQC ( ch_input_fastq )
     ch_fastp_trimmed = FASTP (  ch_input_fastq )
     ch_fastp_fastqc = FASTP_FASTQC ( ch_fastp_trimmed.Reads ) 
-    ch_primer_trimmed = ALIENTRIMMER ( ch_fastp_trimmed.Reads, params.primers )
-    ch_alientrimmer_fastqc = ALIENTRIMMER_FASTQC ( ch_primer_trimmed ) 
-    ch_classified_reads = CLASSIFY ( ch_primer_trimmed, params.krakendb )
-    ch_filtered_reads = EXTRACT ( ch_classified_reads.ClassifiedFastq, ch_classified_reads.KrakenOutput, ch_classified_reads.KrakenReport, params.taxid )
-    ch_merged_reads = MERGE ( ch_classified_reads.UnclassifiedFastq.combine( ch_filtered_reads, by:0 ) )
-    ch_kraken_fastqc = KRAKEN_FASTQC ( ch_merged_reads )    
-    ch_multiqc = MULTIQC ( ch_raw_fastqc.Zip.concat(ch_fastp_fastqc.Zip).concat(ch_alientrimmer_fastqc.Zip).concat(ch_kraken_fastqc.Zip).collect() )
-    ch_multiqc_report = MULTIQC_READS_REPORT ( ch_multiqc.Txt)
+
+    if (params.seqprotocol == "amplicons") {
+       ch_primer_trimmed = ALIENTRIMMER ( ch_fastp_trimmed.Reads, params.primers )
+       ch_alientrimmer_fastqc = ALIENTRIMMER_FASTQC ( ch_primer_trimmed ) 
+       ch_classified_reads = CLASSIFY ( ch_primer_trimmed, params.krakendb )
+       ch_filtered_reads = EXTRACT ( ch_classified_reads.ClassifiedFastq, ch_classified_reads.KrakenOutput, ch_classified_reads.KrakenReport, params.taxid )
+       ch_merged_reads = MERGE ( ch_classified_reads.UnclassifiedFastq.combine( ch_filtered_reads, by:0 ) )
+       ch_kraken_fastqc = KRAKEN_FASTQC ( ch_merged_reads )    
+       ch_multiqc = MULTIQC ( ch_raw_fastqc.Zip.concat(ch_fastp_fastqc.Zip).concat(ch_alientrimmer_fastqc.Zip).concat(ch_kraken_fastqc.Zip).collect() )
+    } else if (params.seqprotocol == "capture") {
+       ch_classified_reads = CLASSIFY ( ch_fastp_trimmed.Reads, params.krakendb )
+       ch_filtered_reads = EXTRACT ( ch_classified_reads.ClassifiedFastq, ch_classified_reads.KrakenOutput, ch_classified_reads.KrakenReport, params.taxid )
+       ch_merged_reads = MERGE ( ch_classified_reads.UnclassifiedFastq.combine( ch_filtered_reads, by:0 ) )
+       ch_kraken_fastqc = KRAKEN_FASTQC ( ch_merged_reads )    
+       ch_multiqc = MULTIQC ( ch_raw_fastqc.Zip.concat(ch_fastp_fastqc.Zip).concat(ch_kraken_fastqc.Zip).collect() )
+    }
+   
+    // Creates csv file with rread length and amount of reads 
+    ch_multiqc_report = MULTIQC_READS_REPORT ( ch_multiqc.Txt )
     // Contig generation
     ch_spades = SPADES ( ch_merged_reads )
     ch_metaspades = METASPADES ( ch_merged_reads )
