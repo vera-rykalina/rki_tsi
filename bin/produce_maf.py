@@ -29,9 +29,6 @@ df["Sum"] = df[["A count", "C count", "G count", "T count"]].sum(axis=1)
 # Find Max (throughout columns A count: T count)
 df["MAF"] = 1 - df["Max"]/df["Sum"]
 
-# Replace NaNs by zeros 
-#df["MAF"] = df["MAF"].replace(np.nan, 0)
-
 # Select only what is needed
 df = df.loc[:,["Position in B.FR.83.HXB2_LAI_IIIB_BRU.K03455", "MAF"]]
 
