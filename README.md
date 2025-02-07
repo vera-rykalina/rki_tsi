@@ -20,7 +20,7 @@ The pipeline includes the following tools:
 - HIV-phyloTSI (T. Golubchik)
 
 ## Installation
-The pipeline is written in Nextflow, which can be easily install using conda.
+The pipeline is written in Nextflow, which can be easily installed using conda.
 
 - Install conda if not installed:
 
