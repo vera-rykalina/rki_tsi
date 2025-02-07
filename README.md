@@ -1,5 +1,5 @@
-# HiVtime Pipeline
-This is a seamless pipeline developed to automate HIV-phyloTSI method. The [method](https://www.medrxiv.org/content/10.1101/2022.05.15.22275117v1) is meant to estimate time since infection (TSI) from HIV deep-sequencing data. Here is a link for the HIV-phyloTSI GitHub [page](https://github.com/BDI-pathogens/HIV-phyloTSI/tree/main).
+# HIVtime
+HIVtime is a seamless pipeline developed to automate HIV-phyloTSI method. The [method](https://www.medrxiv.org/content/10.1101/2022.05.15.22275117v1) is meant to estimate time since infection (TSI) from HIV deep-sequencing data. Here is a link for the HIV-phyloTSI GitHub [page](https://github.com/BDI-pathogens/HIV-phyloTSI/tree/main).
 
 ## Pipeline workflow
 ![Plot](/images/HIVtime.png)
@@ -20,38 +20,44 @@ The pipeline includes the following tools:
 - HIV-phyloTSI (T. Golubchik)
 
 ## Installation
-Make sure that R with the phyloscannerR package installed globally (I am working on it to automate it as well). All other software tools with their dependencies get installed automatically via conda directives. 
+The pipeline is written in Nextflow, which can be easily install using conda.
 
-Download Kraken2 database, we currently use kraken2_nt_20231129.
+- Install conda if not installed:
 
-Then use the path to kraken DB for the parameter **--krakendb**.
+```sh
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+bash Miniconda3-latest-Linux-x86_64.sh
+```
 
-Or make it default: krakendb = "/yourlocation/kraken2_nt_20231129"
-
-The [database](https://benlangmead.github.io/aws-indexes/k2) used by the pipeline is nt Database (29 November, 2023) which is stored within HPC resources. 
-
-Alternativelly, one can install all the tools manually, using .yml recipes (see Environments folder).
-
-## Usage
-
-We recommend to install mamba for a quicker installation process (in base env)
+- Install mamba if not installed (recommended):
 
 ```sh
 conda install mamba -n base -c conda-forge
 ```
 
-Create a nextflow environment, using **nextflow.yml** file:
+- Install nextflow, using **nextflow.yml** file
 
 ```sh
 conda env create -n nextflow -f Environmets/nextflow.yml
 ```
 
-Activate the *nextflow* environment:
+All other software tools with their dependencies get installed automatically within the pipeline via conda directives. 
+
+## Prerequisite
+- Download Kraken2 database
+
+Then use the path to kraken DB for the parameter **--krakendb** or make it default by an assignment: krakendb = "/yourlocation/kraken2_nt_20231129"
+
+I personally use this [database](https://benlangmead.github.io/aws-indexes/k2) (nt Database 29 November, 2023).
+
+
+
+## Usage
+- Activate the *nextflow* environment:
 ```sh
 conda activate nextflow
 ```
-
-Run the pipeline (example run, for more information use **--help**): 
+- Run the pipeline (example run, for more information use **--help**): 
 
 ```sh
 nextflow hivtime.nf \
