@@ -35,10 +35,16 @@ bash Miniconda3-latest-Linux-x86_64.sh
 conda install mamba -n base -c conda-forge
 ```
 
+- Clone the repo
+
+```sh
+git clone https://github.com/vera-rykalina/rki_tsi.git
+```
+
 - Install nextflow, using **nextflow.yml** file
 
 ```sh
-conda env create -n nextflow -f Environmets/nextflow.yml
+conda env create -n nextflow -f env/nextflow.yml
 ```
 
 All other software tools with their dependencies get installed automatically within the pipeline via conda directives. 
