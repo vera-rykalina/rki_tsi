@@ -93,7 +93,7 @@ ContigMinBlastOverlapToMerge='0.8'
 MafftTestingStrategy="MinAlnLength"
 
 # Shall we trim adapaters and low quality bases from reads, using trimmomatic?
-TrimReadsForAdaptersAndQual=false
+TrimReadsForAdaptersAndQual=true
 # The trimmomatic manual explains at length the parameters controlling read
 # trimming; the reader is referred to it for explanations of the following
 # variables and other options not used here:
