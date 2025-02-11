@@ -104,7 +104,7 @@ BaseQualityParams='MINLEN:50 LEADING:20 TRAILING:20 SLIDINGWINDOW:4:20'
 NumThreadsTrimmomatic=1
 
 # Shall we trim exact matches to PCR primers from the end of reads using fastaq? 
-TrimReadsForPrimers=true
+TrimReadsForPrimers=false
 # Shall we also trim matches to the PCR primers that differ by a single base
 # change? (This slows down the trimming step a lot.)
 TrimPrimerWithOneSNP=false
