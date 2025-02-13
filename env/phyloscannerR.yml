@@ -12,6 +12,7 @@ dependencies:
   - r-biocmanager = 1.30.25
   - bioconductor-ggtree = 3.14.0
   - bioconductor-rbgl = 1.82.0
+  - r-extradistr = 1.10.0
   - r-data.table = 1.16.4 
   - r-phangorn = 2.12.1
   - r-phytools = 2.4_4
