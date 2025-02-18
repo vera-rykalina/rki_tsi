@@ -843,16 +843,16 @@ process MAF {
   tuple val(id), path(ref), path(bam), path(bai), path(basefreqs)
     
  output:
-  path "${id}.csv"
+  path "${id}_maf.csv"
     
  script:
   if (basefreqs instanceof List) {
   """
-  produce_maf.py ${basefreqs[1]} ${id}.csv
+  calculate_maf.py -b ${basefreqs[1]} -o ${id}_maf.csv
   """ 
   } else {
   """
-  produce_maf.py ${basefreqs} ${id}.csv
+  calculate_maf.py -b ${basefreqs} -o ${id}_maf.csv
   """
    }
 }
@@ -871,7 +871,8 @@ process JOIN_MAFS {
   script:
     """
     join_mafs.py ${mafcsv}
-    """ 
+    
+    """
   }
 
 
