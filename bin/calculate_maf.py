@@ -3,6 +3,7 @@
 # Import libraries
 import argparse
 import pandas as pd
+import numpy as np
 
 
 # Global variables 
@@ -49,7 +50,7 @@ def calculate_maf(basefreqs, sample_id ):
     maf = maf.loc[:,["Position in B.FR.83.HXB2_LAI_IIIB_BRU.K03455", "MAF"]]
     # Rename HBX2 column -> pos and MAF column -> sample ID (variable)
     maf.rename({"Position in B.FR.83.HXB2_LAI_IIIB_BRU.K03455": "pos", "MAF": sample_id}, axis=1, inplace=True)
-    maf["pos"] = maf["pos"].astype(int)
+    maf["pos"] = maf["pos"].astype(np.int64)
     return maf
 
 def transform_maf(hxb2, maf):
