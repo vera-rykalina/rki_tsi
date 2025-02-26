@@ -840,7 +840,7 @@ process MAF {
  //debug true
 
  input:
-  tuple val(id), path(ref), path(bam), path(bai), path(basefreqs)
+  tuple path(hxb2), val(id), path(ref), path(bam), path(bai), path(basefreqs)
     
  output:
   path "${id}_maf.csv"
@@ -848,11 +848,11 @@ process MAF {
  script:
   if (basefreqs instanceof List) {
   """
-  calculate_maf.py -b ${basefreqs[1]} -o ${id}_maf.csv
+  calculate_maf.py -b ${basefreqs[1]} -r ${hxb2} -o ${id}_maf.csv
   """ 
   } else {
   """
-  calculate_maf.py -b ${basefreqs} -o ${id}_maf.csv
+  calculate_maf.py -b ${basefreqs} -r ${hxb2} -o ${id}_maf.csv
   """
    }
 }
@@ -863,14 +863,14 @@ process JOIN_MAFS {
   //debug true
 
   input:
-    path mafcsv
+    path maf_csvs
     
   output:
     path "*.csv"
     
   script:
     """
-    join_mafs.py ${mafcsv}
+    awk 'FNR==1 && NR!=1 { next } { print }' ${maf_csvs} > joined_maf.csv
     
     """
   }
@@ -1206,10 +1206,10 @@ workflow {
     ch_mapping_args_non_reads = ch_mapping_args.map {id, bestref, contigs, shiverref, blast, reads  -> tuple (id, bestref, contigs, shiverref, blast)}
     ch_mapping_args_reads = ch_mapping_args.map {id, bestref, contigs, shiverref, blast, reads  -> tuple (id, reads)}
     ch_mapping_out = SHIVER_MAP ( ch_initdir.InitDir, ch_mapping_args_non_reads, ch_mapping_args_reads )
-     // *********************************************************MAF*********************************************************************
-    ch_maf_out = MAF ( ch_mapping_out )
-    ch_hxb2_maf = ch_ref_hxb2.combine( ch_maf_out.collect() )
-    ch_joined_maf = JOIN_MAFS ( ch_hxb2_maf )
+
+    //***********************************************************MAF********************************************************************
+    ch_maf_out = MAF (ch_ref_hxb2.combine(ch_mapping_out ))
+    ch_joined_maf = JOIN_MAFS ( ch_maf_out.collect() )
     // *******************************************************PHYLOSCANNER******'*****************************************************************
     ch_phyloscanner_csv = BAM_REF_ID_CSV ( ch_mapping_out )
     // An easy way to concatinate bam_ref_id_csv files: use collectFile() operator
