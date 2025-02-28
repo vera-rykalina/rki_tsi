@@ -16,8 +16,6 @@ nextflow.enable.dsl = 2
 
 
 //**************************************************PARAMETERS*******************************************************
-// Change is required! Specify your projectDir here
-projectDir = "/scratch/rykalinav/rki_tsi"
 
 // Parameters for kraken
 //krakendb = params.krakendb
@@ -221,6 +219,8 @@ process ALIENTRIMMER {
        -a ${params.primers} \
        -o ${id}_alientrimmer.R \
        -k 15 \
+       -l 80 \
+       -q 20 \
        -z
 
   rm -f ${id}_alientrimmer.R.S.fastq.gz
@@ -236,6 +236,8 @@ process ALIENTRIMMER {
            -a ${params.primers} \
            -o ${id}_alientrimmer.R \
            -k 15 \
+           -l 80 \
+           -q 20 \
            -z
     mv ${id}_alientrimmer.R.fastq.gz ${id}_alientrimmer.R1.fastq.gz
     """
@@ -809,7 +811,7 @@ process SHIVER_MAP {
   }
 }
 
-rocess CREATE_POL_BED {
+process CREATE_POL_BED {
   conda "${projectDir}/env/shiver.yml"
   publishDir "${params.outdir}/06_bed", mode: "copy", overwrite: true
   //debug true
@@ -929,7 +931,7 @@ process MAPPING_NOTES {
 }
 
 process MULTIQC_READS_REPORT {
-  conda "${projectDir}/env/tsi-python.yml"
+  conda "${projectDir}/env/phylo_tsi.yml"
   publishDir "${params.outdir}/10_reports", mode: "copy", overwrite: true
   debug true
 
