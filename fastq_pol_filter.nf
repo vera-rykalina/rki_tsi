@@ -2,15 +2,14 @@ nextflow.enable.dsl = 2
 
 // Run
 
-/* nextflow hivtime.nf \
+/* nextflow fastq_pol_filter.nf \
 -c hivtime_profile.config 
 --outdir output_pe
---fastq "/scratch/rykalinav/rki_tsi/paired_reads/*R{1,2}*.fastq.gz" 
+--fastq "../rki_tsi/paired_reads/*R{1,2}*.fastq.gz" 
 -profile rki_slurm,rki_mamba \
---krakendb /scratch/databases/kraken2_nt_20231129/ \
---mode paired 
---alignment /scratch/rykalinav/rki_tsi/data/HIV1_COM_2022_genome_DNA.fasta \
---primers /scratch/rykalinav/rki_tsi/data/primers/primers_GallEtAl2012.fasta \
+--krakendb ../databases/kraken2/kraken2_nt_20231129/ \
+--mode paired \ 
+--primers ../rki_tsi/data/primers/primers_GallEtAl2012.fasta \
 -resume
 */
 
