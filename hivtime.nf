@@ -679,7 +679,7 @@ process KALLISTO_QUANT {
 }
 
 process BEST_ALIGNMENT {
-  publishDir "${projectDir}/${params.outdir}/04_kallisto_best_ref", mode: "copy", overwrite: true
+  publishDir "${params.outdir}/04_kallisto_best_ref", mode: "copy", overwrite: true
   debug true
 
   input:
@@ -1213,7 +1213,7 @@ workflow {
     // *******************************************************PHYLOSCANNER******'*****************************************************************
     ch_phyloscanner_csv = BAM_REF_ID_CSV ( ch_mapping_out )
     // An easy way to concatinate bam_ref_id_csv files: use collectFile() operator
-    ch_bam_ref_id_all = ch_phyloscanner_csv.collectFile( name: "phloscanner_input.csv", storeDir: "${projectDir}/${params.outdir}/08_bam_ref_id_all" )
+    ch_bam_ref_id_all = ch_phyloscanner_csv.collectFile( name: "phloscanner_input.csv", storeDir: "${params.outdir}/08_bam_ref_id_all" )
     ch_mapped_out_no_id = ch_mapping_out.map {id, fasta, bam, bai, csv -> [fasta, bam, bai]}
     ch_aligned_reads = PHYLOSCANNER_ALIGN_READS ( ch_bam_ref_id_all, ch_mapped_out_no_id.flatten().collect() )
 
@@ -1239,6 +1239,6 @@ workflow {
     ch_prettified_tsi = PRETTIFY_AND_PLOT ( ch_phylo_tsi )
     // Mapping notes
     ch_mapping_notes = MAPPING_NOTES ( ch_mapping_args_non_reads )
-    ch_mapping_notes_all = ch_mapping_notes.collectFile( name: "mapping_report.csv", storeDir: "${projectDir}/${params.outdir}/11_phylo_tsi" )
+    ch_mapping_notes_all = ch_mapping_notes.collectFile( name: "mapping_report.csv", storeDir: "${params.outdir}/11_phylo_tsi" )
 
 }
