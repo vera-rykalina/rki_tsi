@@ -1012,7 +1012,7 @@ workflow {
     
      // Mapping notes
     ch_mapping_notes = MAPPING_NOTES ( ch_mapping_args_non_reads )
-    ch_mapping_notes_all = ch_mapping_notes.collectFile(name: "mapping_report.csv", storeDir: "${projectDir}/${params.outdir}/10_reports")
+    ch_mapping_notes_all = ch_mapping_notes.collectFile(name: "mapping_report.csv", storeDir: "${params.outdir}/10_reports")
 
 }
 
