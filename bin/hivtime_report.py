@@ -101,7 +101,7 @@ def load_mapping_notes_table(fpath):
     return mapping_notes
 
 def merge_all_tables(phylotsi, multiqc, mapping_notes):
-    # Join 3 dfs by Scount
+    # Merge 3 dfs by id
     hivtime_report = phylotsi.merge(multiqc, on="id", how="left").merge(mapping_notes, on="id", how="left")
     hivtime_report.rename(columns={"id":"sample_id", "RF_pred_linear":"rf_pred_linear", 
                                    "RF_pred_min_linear":"rf_pred_min_linear", 
