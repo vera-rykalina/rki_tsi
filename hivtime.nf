@@ -1205,7 +1205,9 @@ workflow {
     ch_mapping_args_non_reads = ch_mapping_args.map {id, bestref, contigs, shiverref, blast, reads  -> tuple (id, bestref, contigs, shiverref, blast)}
     ch_mapping_args_reads = ch_mapping_args.map {id, bestref, contigs, shiverref, blast, reads  -> tuple (id, reads)}
     ch_mapping_out = SHIVER_MAP ( ch_initdir.InitDir, ch_mapping_args_non_reads, ch_mapping_args_reads )
-
+    // Mapping notes
+    ch_mapping_notes = MAPPING_NOTES ( ch_mapping_args_non_reads )
+    ch_mapping_notes_all = ch_mapping_notes.collectFile( name: "mapping_report.csv", storeDir: "${params.outdir}/11_phylo_tsi/reports" )
     //***********************************************************MAF********************************************************************
     ch_maf_out = MAF (ch_ref_hxb2.combine(ch_mapping_out ))
     ch_joined_maf = JOIN_MAFS ( ch_maf_out.collect() )
@@ -1235,9 +1237,6 @@ workflow {
     ch_analysed_trees = PHYLOSCANNER_TREE_ANALYSIS ( ch_install_phyloscannerR, ch_iqtree.Treefile.collect() )
     // *******************************************************HIVPhyloTSI*****************************************************************
     ch_phylo_tsi = PHYLO_TSI ( ch_analysed_trees.patstat_csv, ch_joined_maf )
-    ch_prettified_tsi = PRETTIFY_AND_PLOT ( ch_phylo_tsi )
-    // Mapping notes
-    ch_mapping_notes = MAPPING_NOTES ( ch_mapping_args_non_reads )
-    ch_mapping_notes_all = ch_mapping_notes.collectFile( name: "mapping_report.csv", storeDir: "${params.outdir}/11_phylo_tsi/reports" )
-
+    // Report
+    ch_hivtime_report = PEPORT ( ch_phylo_tsi, ch_multiqc_report, ch_mapping_notes_all )
 }
