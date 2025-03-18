@@ -1061,7 +1061,7 @@ process PHYLOSCANNER_TREE_ANALYSIS {
 
 process PHYLO_TSI {
   conda "${projectDir}/env/phylo_tsi.yml"
-  publishDir "${params.outdir}/11_phylo_tsi", mode: "copy", overwrite: true
+  publishDir "${params.outdir}/11_phylo_tsi/reports", mode: "copy", overwrite: true
   //debug true
 
   input:
@@ -1083,26 +1083,8 @@ process PHYLO_TSI {
     """ 
 }
 
-process PRETTIFY_AND_PLOT {
-  conda "${projectDir}/env/phylo_tsi.yml"
-  publishDir "${params.outdir}/11_phylo_tsi", mode: "copy", overwrite: true
-  debug true
-
-  input:
-    path phylo_tsi_csv
-
-  output:
-    path "phylo_tsi_prettified.csv"
-    path "tsi_barplot.png"
-  
-  script:
-    """
-    tsi_prettify_and_plot.py ${phylo_tsi_csv} 
-    """ 
-}
-
 process MAPPING_NOTES {
-  debug true
+  //debug true
 
   input:
     tuple val(id), path(kallistoRef), path(contigs), path(shiverRef), path(blast)
@@ -1125,8 +1107,8 @@ process MAPPING_NOTES {
 
 process MULTIQC_READS_REPORT {
   conda "${projectDir}/env/phylo_tsi.yml"
-  publishDir "${params.outdir}/11_phylo_tsi", mode: "copy", overwrite: true
-  debug true
+  publishDir "${params.outdir}/11_phylo_tsi/reports", mode: "copy", overwrite: true
+  //debug true
 
   input:
     path multiqc_txt
@@ -1140,6 +1122,25 @@ process MULTIQC_READS_REPORT {
     """ 
 }
 
+process REPORT {
+  conda "${projectDir}/env/phylo_tsi.yml"
+  publishDir "${params.outdir}/11_phylo_tsi", mode: "copy", overwrite: true
+  debug true
+
+  input:
+    path phylotsi_csv
+    path multiqc_csv
+    path mapping_csv
+
+  output:
+    path "hivtime.csv"
+    path "hivtime.png"
+  
+  script:
+    """
+    hivtime_report.py -t ${phylotsi_csv} -q ${multiqc_csv} -m ${mapping_csv} -o hivtime
+    """ 
+}
 
 // ****************************************************INPUT CHANNELS**********************************************************
 ch_ref_hxb2 = Channel.fromPath("${projectDir}/data/refs/HXB2_refdata.csv", checkIfExists: true)
@@ -1149,12 +1150,10 @@ if (params.mode == 'paired') {
         ch_input_fastq = Channel
         .fromFilePairs( params.fastq, checkIfExists: true )
         .map{ tuple ( it[0].split("HIV")[1].split("_")[0], [it[1][0], it[1][1]]) }
-        //.fromFilePairs( "${projectDir}/RawData/*_R{1,2}*.fastq.gz", checkIfExists: true )
 
         
 } else { ch_input_fastq = Channel
         .fromPath( params.fastq, checkIfExists: true )
-        //.fromPath( "${projectDir}/RawData/*.fastq.gz", checkIfExists: true )
         .map { file -> [file.simpleName, [file]]}
         .map {tuple ( it[0].split("HIV")[1].split("_")[0], it[1][0])}
 
@@ -1239,6 +1238,6 @@ workflow {
     ch_prettified_tsi = PRETTIFY_AND_PLOT ( ch_phylo_tsi )
     // Mapping notes
     ch_mapping_notes = MAPPING_NOTES ( ch_mapping_args_non_reads )
-    ch_mapping_notes_all = ch_mapping_notes.collectFile( name: "mapping_report.csv", storeDir: "${params.outdir}/11_phylo_tsi" )
+    ch_mapping_notes_all = ch_mapping_notes.collectFile( name: "mapping_report.csv", storeDir: "${params.outdir}/11_phylo_tsi/reports" )
 
 }
