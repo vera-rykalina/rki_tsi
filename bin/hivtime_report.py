@@ -105,8 +105,7 @@ def merge_all_tables(phylotsi, multiqc, mapping_notes):
     hivtime_report = phylotsi.merge(multiqc, on="id", how="left").merge(mapping_notes, on="id", how="left")
     hivtime_report.rename(columns={"id":"sample_id", "RF_pred_linear":"rf_pred_linear", 
                                    "RF_pred_min_linear":"rf_pred_min_linear", 
-                                   "RF_pred_max_linear":"rf_pred_max_linear"}, 
-                                   inplace=True)
+                                   "RF_pred_max_linear":"rf_pred_max_linear"}, inplace=True)
     return hivtime_report
 
 def save_hivtime_report(hivtime_report, barplot_fig, outf):
@@ -118,7 +117,7 @@ def save_hivtime_report(hivtime_report, barplot_fig, outf):
 
 
 def main():
-    ''' Run calculations. '''
+    ''' Create a final report. '''
     phylotsi = rework_hivphylotsi_table(_args.phylotsi)
     multiqc = load_mutliqc_report_table(_args.multiqc)
     mapping_notes = load_mapping_notes_table(_args.mapping)
