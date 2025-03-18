@@ -1238,5 +1238,5 @@ workflow {
     // *******************************************************HIVPhyloTSI*****************************************************************
     ch_phylo_tsi = PHYLO_TSI ( ch_analysed_trees.patstat_csv, ch_joined_maf )
     // Report
-    ch_hivtime_report = PEPORT ( ch_phylo_tsi, ch_multiqc_report, ch_mapping_notes_all )
+    ch_hivtime_report = REPORT ( ch_phylo_tsi, ch_multiqc_report, ch_mapping_notes_all )
 }
