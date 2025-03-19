@@ -111,8 +111,7 @@ def merge_all_tables(phylotsi, multiqc, mapping_notes):
 def save_hivtime_report(hivtime_report, barplot_fig, outf):
     ''' Write output. '''
     hivtime_report.to_csv(outf + ".csv", sep=",", header = True, index=False, encoding="utf-8")
-    print("Output saved as {}.".format(outf))
-    print(hivtime_report.head())
+    print("Output saved as {} with .csv or .png extensions.".format(outf))
     barplot_fig.savefig(outf + ".png", dpi = 300)
 
 
@@ -128,9 +127,3 @@ def main():
 if __name__ == '__main__':
     initialise()
     main()
-
-
-
-
-    
-    
