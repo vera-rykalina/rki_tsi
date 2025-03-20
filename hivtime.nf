@@ -1125,7 +1125,7 @@ process MULTIQC_READS_REPORT {
 process REPORT {
   conda "${projectDir}/env/phylo_tsi.yml"
   publishDir "${params.outdir}/11_phylo_tsi", mode: "copy", overwrite: true
-  debug true
+  //debug true
 
   input:
     path phylotsi_csv
