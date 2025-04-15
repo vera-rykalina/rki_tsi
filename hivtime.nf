@@ -1033,8 +1033,8 @@ process PHYLOSCANNER_TREE_ANALYSIS {
    path "*patStats.csv", emit: patstat_csv
    path "*blacklistReport.csv", emit: blacklist_csv
    path "*patStats.pdf", emit: patstat_pdf
+   path "*.nex", emit: nex
    //path "*.rda", emit: rda   
-   //path "*.nex", emit: nex
 
  script:
  """
