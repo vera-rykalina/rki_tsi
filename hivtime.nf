@@ -103,7 +103,7 @@ def helpMSG() {
     log.info """
   
 
-    ${c_blue}HIVtime${c_blue}
+    ${c_blue}HIVtime: A Seamless Pipeline for Estimating Time since HIV Infection${c_blue}
     ====================================================================================================================================================
     Author: Vera Rykalina
     ${c_blue}Affiliation: Robert Koch Institute${c_blue}
@@ -116,19 +116,15 @@ def helpMSG() {
     nextflow hivtime.nf -c profile.config --fastq '*R{1,2}.fastq.gz' --krakendb db --primers primers.fasta --mode paired -profile profile --oudir output 
    
     
-    ${c_green}Required settings:${c_reset}  
+    ${c_green}Settings:${c_reset}  
     
     --fastq             Path to a FASTQ files e.g.: '*R{1,2}*.fastq.gz'.
 
     --krakendb          Path to a Kraken2 database. [recommended: kraken2_nt_20231129].
     
-    --outdir            Name for an output directory e.g. output [string].
-
     --primers           Path of a FASTA file containing the primer sequences to be clipped.
-
     
-
-    ${c_green}Optional input settings:${c_reset}
+    --outdir            Name for an output directory e.g. output [string].
 
     --mode              Choose from [paired, single] [default: paired].
 
