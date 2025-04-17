@@ -44,6 +44,7 @@ params.k = 15
 // Parameters for HIV-PhyloTSI
 params.model = "${projectDir}/bin/Model"
 params.seqprotocol = "amplicons"
+params.mode = "paired"
 
 params.normalisation = "${projectDir}/bin/tools/CalculateTreeSizeInGenomeWindows.py"
 
@@ -73,7 +74,7 @@ if ( ! (params.mode in modes) ) {
 
 Set seqprotocols = ['amplicons', 'capture']
 if ( ! (params.seqprotocol in seqprotocols) ) {
-    exit 1, "Unknown mode. Choose from " + seqprotocols
+    exit 1, "Unknown protocol. Choose from " + seqprotocols
 }
 
 
@@ -102,13 +103,13 @@ def helpMSG() {
     log.info """
   
 
-    ${c_blue}HiVtime${c_blue}
-    ====================================================
+    ${c_blue}HIVtime${c_blue}
+    ====================================================================================================================================================
     Author: Vera Rykalina
     ${c_blue}Affiliation: Robert Koch Institute${c_blue}
     Acknowledgement: Tanay Golubchik, Chris Wymant
     Created: 25 June 2024
-    ====================================================
+    ====================================================================================================================================================
   
 
     ${c_yellow}Usage examples:${c_reset}
@@ -117,19 +118,20 @@ def helpMSG() {
     
     ${c_green}Required settings:${c_reset}  
     
-    --fastq             Path to a FASTQ files e.g.: '*R{1,2}*.fastq.gz'
+    --fastq             Path to a FASTQ files e.g.: '*R{1,2}*.fastq.gz'.
 
-    --krakendb          Path to a Kraken2 database. [recommended: kraken2_nt_20231129]
-
-    --mode              Choose from [paired, single]
+    --krakendb          Path to a Kraken2 database. [recommended: kraken2_nt_20231129].
     
-    --outdir            Name for an output directory e.g. output [string]
+    --outdir            Name for an output directory e.g. output [string].
 
-    --primers           Path of a FASTA file containing the primer sequences to be clipped
+    --primers           Path of a FASTA file containing the primer sequences to be clipped.
 
     
 
     ${c_green}Optional input settings:${c_reset}
+
+    --mode              Choose from [paired, single] [default: paired].
+
     --adapters          Define the path of a FASTA file containing the adapter sequences to be clipped [default: data/adapters/adapters.fasta].
 
     --alignment         Define the path of a FASTA file containing the HIV alignment [default: data/alignments/HIV1_COM_2022_genome_DNA.fasta].
@@ -1149,7 +1151,7 @@ ch_ref_hxb2 = Channel.fromPath("${projectDir}/data/refs/HXB2_refdata.csv", check
 if (params.mode == 'paired') {
         ch_input_fastq = Channel
         .fromFilePairs( params.fastq, checkIfExists: true )
-        .map{ tuple ( it[0].split("HIV")[1].split("_")[0], [it[1][0], it[1][1]]) }
+        //.map{ tuple ( it[0].split("HIV")[1].split("_")[0], [it[1][0], it[1][1]]) }
 
         
 } else { ch_input_fastq = Channel
