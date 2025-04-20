@@ -45,9 +45,13 @@ def parse_multiqc_txt(args):
     df_length = df_length.rename_axis(None, axis=1)
     
     # Select needed columns
-    df_reads = df_reads.loc[:,["id", "raw_reads_diff_mln", "raw.R1", "kraken.R1"]]
-    df_length = df_length.loc[:,["id", "raw_avg_length_diff_bp", "raw.R1", "kraken.R1"]]
-
+    if "raw.R2" in df_reads.columns:
+         df_reads = df_reads.loc[:,["id", "raw_reads_diff_mln", "raw.R1", "kraken.R1"]]
+         df_length = df_length.loc[:,["id", "raw_avg_length_diff_bp", "raw.R1", "kraken.R1"]]
+    else:
+         df_reads = df_reads.loc[:,["id", "raw.R1", "kraken.R1"]]
+         df_length = df_length.loc[:,["id", "raw.R1", "kraken.R1"]]
+         
     # Rename column names
     df_reads = df_reads.rename(columns = {"raw.R1" : "reads_raw_mln", "kraken.R1" : "reads_final_mln"})
     df_length = df_length.rename(columns = {"raw.R1" : "length_raw", "kraken.R1" : "length_final"})
