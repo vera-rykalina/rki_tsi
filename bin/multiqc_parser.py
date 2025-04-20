@@ -20,16 +20,19 @@ def parse_multiqc_txt(args):
     df_reads = df.pivot(index="id", columns="filter_type", values="FastQC_mqc_generalstats_fastqc_total_sequences")
     df_length = df.pivot(index="id", columns="filter_type", values="FastQC_mqc_generalstats_fastqc_avg_sequence_length")
     
-    # Calculate difference between R1 and R2 raw reads
-    df_reads["raw_reads_diff_mln"] = df_reads["raw.R1"] -  df_reads["raw.R2"] 
-    df_length["raw_avg_length_diff_bp"] = df_length["raw.R1"] -  df_length["raw.R2"] 
+    # Calculate difference between R1 and R2 raw reads (for paired-end only)
+    if "raw.R2" in df_reads.columns:
+         df_reads["raw_reads_diff_mln"] = df_reads["raw.R1"] -  df_reads["raw.R2"] 
+         df_length["raw_avg_length_diff_bp"] = df_length["raw.R1"] -  df_length["raw.R2"] 
     
     # Round to one decimal point or to the whole number, abs()
-    df_reads["raw_reads_diff_mln"] = abs(df_reads["raw_reads_diff_mln"].astype(int))
+    if "raw.R2" in df_reads.columns:
+         df_reads["raw_reads_diff_mln"] = abs(df_reads["raw_reads_diff_mln"].astype(int))
     df_reads["raw.R1"] = df_reads["raw.R1"].round(1)
     df_reads["kraken.R1"] = df_reads["kraken.R1"].round(1)
     
-    df_length["raw_avg_length_diff_bp"] = abs(df_length["raw_avg_length_diff_bp"].astype(int))
+    if "raw.R2" in df_reads.columns:
+         df_length["raw_avg_length_diff_bp"] = abs(df_length["raw_avg_length_diff_bp"].astype(int))
     df_length["raw.R1"] = df_length["raw.R1"].astype(int)
     df_length["kraken.R1"] = df_length["kraken.R1"].astype(int)
     
