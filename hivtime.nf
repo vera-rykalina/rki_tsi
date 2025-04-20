@@ -1029,7 +1029,7 @@ process PHYLOSCANNER_TREE_ANALYSIS {
    path "*patStats.csv", emit: patstat_csv
    path "*blacklistReport.csv", emit: blacklist_csv
    path "*patStats.pdf", emit: patstat_pdf
-   path "*.nex", emit: nex
+   path "nex_trees/*.nex", emit: nex
    //path "*.rda", emit: rda   
 
  script:
@@ -1052,6 +1052,9 @@ process PHYLOSCANNER_TREE_ANALYSIS {
     --outgroupName B.FR.83.HXB2_LAI_IIIB_BRU.K03455 \
     --normRefFileName ${params.hiv_distance_normalisation} \
     --treeFileExtension .treefile IQTREE_bestTree.InWindow "k${params.k}" "s,${params.k}" 
+
+    mkdir nex_trees
+    mv *.nex nex_trees
  """ 
 }
 
@@ -1230,7 +1233,7 @@ workflow {
     ch_aligned_reads_iqtree = ALIGNED_READS_IQTREE ( ch_grouped_aligned_reads )
     ch_iqtree = IQTREE ( ch_aligned_reads_iqtree  )
     ch_install_phyloscannerR = PHYLOSCANNER_R_INSTALL ( )
-    ch_analysed_trees = PHYLOSCANNER_TREE_ANALYSIS ( ch_install_phyloscannerR, ch_iqtree.Treefile.collect() )
+    ch_analysed_trees = PHYLOSCANNER_TREE_ANALYSIS ( ch_install_phyloscannerR, ch_iqtree.Treefile.collect())
     // *******************************************************HIVPhyloTSI*****************************************************************
     ch_phylo_tsi = PHYLO_TSI ( ch_analysed_trees.patstat_csv, ch_joined_maf )
     // Report
