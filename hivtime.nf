@@ -974,8 +974,6 @@ process ALIGNED_READS_IQTREE {
 process IQTREE {
   label "iqtree"
   conda "${projectDir}/env/phyloscanner.yml"
-  publishDir "${params.outdir}/09_iqtree_trees", mode: "copy", overwrite: true
-  //debug true
 
  input:
   tuple val (window), path (fasta)
@@ -1020,7 +1018,7 @@ process PHYLOSCANNER_R_INSTALL {
 process PHYLOSCANNER_TREE_ANALYSIS {
   conda "${projectDir}/env/phyloscannerR.yml"
   label "phyloscanner_tree_analysis"
-  publishDir "${params.outdir}/10_patStats", mode: "copy", overwrite: true
+  publishDir "${params.outdir}/09_patStats", mode: "copy", overwrite: true
   //debug true
 
  input:
@@ -1059,7 +1057,7 @@ process PHYLOSCANNER_TREE_ANALYSIS {
 
 process PHYLO_TSI {
   conda "${projectDir}/env/phylo_tsi.yml"
-  publishDir "${params.outdir}/11_phylo_tsi/reports", mode: "copy", overwrite: true
+  publishDir "${params.outdir}/10_phylo_tsi/reports", mode: "copy", overwrite: true
   //debug true
 
   input:
@@ -1105,7 +1103,7 @@ process MAPPING_NOTES {
 
 process MULTIQC_READS_REPORT {
   conda "${projectDir}/env/phylo_tsi.yml"
-  publishDir "${params.outdir}/11_phylo_tsi/reports", mode: "copy", overwrite: true
+  publishDir "${params.outdir}/10_phylo_tsi/reports", mode: "copy", overwrite: true
   //debug true
 
   input:
@@ -1122,7 +1120,7 @@ process MULTIQC_READS_REPORT {
 
 process REPORT {
   conda "${projectDir}/env/phylo_tsi.yml"
-  publishDir "${params.outdir}/11_phylo_tsi", mode: "copy", overwrite: true
+  publishDir "${params.outdir}/10_phylo_tsi", mode: "copy", overwrite: true
   //debug true
 
   input:
@@ -1147,7 +1145,7 @@ ch_ref_hxb2 = Channel.fromPath("${projectDir}/data/refs/HXB2_refdata.csv", check
 if (params.mode == 'paired') {
         ch_input_fastq = Channel
         .fromFilePairs( params.fastq, checkIfExists: true )
-        //.map{ tuple ( it[0].split("HIV")[1].split("_")[0], [it[1][0], it[1][1]]) }
+        .map{ tuple ( it[0].split("HIV")[1].split("_")[0], [it[1][0], it[1][1]]) }
 
         
 } else { ch_input_fastq = Channel
@@ -1205,7 +1203,7 @@ workflow {
     ch_mapping_out = SHIVER_MAP ( ch_initdir.InitDir, ch_mapping_args_non_reads, ch_mapping_args_reads )
     // Mapping notes
     ch_mapping_notes = MAPPING_NOTES ( ch_mapping_args_non_reads )
-    ch_mapping_notes_all = ch_mapping_notes.collectFile( name: "mapping_report.csv", storeDir: "${params.outdir}/11_phylo_tsi/reports" )
+    ch_mapping_notes_all = ch_mapping_notes.collectFile( name: "mapping_report.csv", storeDir: "${params.outdir}/10_phylo_tsi/reports" )
     //***********************************************************MAF********************************************************************
     ch_maf_out = MAF (ch_ref_hxb2.combine(ch_mapping_out ))
     ch_joined_maf = JOIN_MAFS ( ch_maf_out.collect() )
