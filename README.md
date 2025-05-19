@@ -1,6 +1,4 @@
 # HIVtime
-HIVtime is a seamless pipeline developed to implement the HIV-phyloTSI method. This method was designed to estimate time since infection (TSI) using HIV deep-sequencing data. The source code and documentation are available on the HIV-phyloTSI GitHub repository.
-
 HIVtime is a seamless pipeline developed to implement the HIV-phyloTSI method. The [method](https://www.medrxiv.org/content/10.1101/2022.05.15.22275117v1) was designed to estimate time since infection (TSI) using HIV deep-sequencing data. The source code and documentation are available on the HIV-phyloTSI GitHub repository [page](https://github.com/BDI-pathogens/HIV-phyloTSI/tree/main).
 
 ## Pipeline workflow
