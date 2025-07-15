@@ -593,6 +593,7 @@ process FASTQ_RENAME_HEADER {
    if (params.mode == "paired") {
    """
    zcat ${reads[0]} |\
+     sed 's/kraken:taxid.*//' |\
      sed 's/:N:0:.*//' |\
      awk '{if (NR%4 == 1) {print \$1 "/" \$2} else print}' |\
      awk '{if (NR%4 == 1)  gsub("/1/","/1",\$1) }1' |\
@@ -602,6 +603,7 @@ process FASTQ_RENAME_HEADER {
 
    
     zcat ${reads[1]} |\
+      sed 's/kraken:taxid.*//' |\
       sed 's/:N:0:.*//' |\
       awk '{if (NR%4 == 1) {print \$1 "/" \$2} else print}' |\
       awk '{if (NR%4 == 1)  gsub("/2/","/2",\$1) }1' |\
@@ -612,6 +614,7 @@ process FASTQ_RENAME_HEADER {
 } else if (params.mode == "single") {
       """
       zcat ${reads[0]} |\
+      sed 's/kraken:taxid.*//' |\
       sed 's/:N:0:.*//' |\
       awk '{if (NR%4 == 1) {print \$1 "/" \$2} else print}' |\
       awk '{if (NR%4 == 1)  gsub("/1/","/1",\$1) }1' |\
@@ -1148,7 +1151,7 @@ ch_ref_hxb2 = Channel.fromPath("${projectDir}/data/refs/HXB2_refdata.csv", check
 if (params.mode == 'paired') {
         ch_input_fastq = Channel
         .fromFilePairs( params.fastq, checkIfExists: true )
-        .map{ tuple ( it[0].split("HIV")[1].split("_")[0], [it[1][0], it[1][1]]) }
+        //.map{ tuple ( it[0].split("HIV")[1].split("_")[0], [it[1][0], it[1][1]]) }
 
         
 } else { ch_input_fastq = Channel
@@ -1157,7 +1160,6 @@ if (params.mode == 'paired') {
         .map {tuple ( it[0].split("HIV")[1].split("_")[0], it[1][0])}
 
 }
-
 
 
 workflow {
