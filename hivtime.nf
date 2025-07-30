@@ -1151,7 +1151,7 @@ ch_ref_hxb2 = Channel.fromPath("${projectDir}/data/refs/HXB2_refdata.csv", check
 if (params.mode == 'paired') {
         ch_input_fastq = Channel
         .fromFilePairs( params.fastq, checkIfExists: true )
-        //.map{ tuple ( it[0].split("HIV")[1].split("_")[0], [it[1][0], it[1][1]]) }
+        .map { tuple ( it[0].split("HIV")[1].split("_")[0], [it[1][0], it[1][1]]) }
 
         
 } else { ch_input_fastq = Channel
