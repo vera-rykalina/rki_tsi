@@ -113,7 +113,7 @@ def helpMSG() {
   
 
     ${c_yellow}Usage examples:${c_reset}
-    nextflow hivtime.nf -c profile.config --fastq '*R{1,2}.fastq.gz' --krakendb db --primers primers.fasta --mode paired -profile profile --oudir output 
+    nextflow hivtime.nf -c profile.config --fastq '*R{1,2}.fastq.gz' --krakendb db --primers primers.fasta --mode paired -profile profile --outdir output 
    
     
     ${c_green}Settings:${c_reset}  
