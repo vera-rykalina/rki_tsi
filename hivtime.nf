@@ -107,7 +107,7 @@ def helpMSG() {
     ====================================================================================================================================================
     Author: Vera Rykalina
     ${c_blue}Affiliation: Robert Koch Institute${c_blue}
-    Acknowledgement: Tanay Golubchik, Chris Wymant
+    Acknowledgement: Tanya Golubchik, Chris Wymant
     Created: 25 June 2024
     ====================================================================================================================================================
   
