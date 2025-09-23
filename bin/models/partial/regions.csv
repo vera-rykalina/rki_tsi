@@ -1,0 +1,4 @@
+pair,sense_primer_coords,sense_primer_length,antisense_primer_coords,antisense_primer_length,product_coords_excl_primers,product_length_excl_primers,product_coords_incl_primers,product_length_incl_primers
+GAG-valid,630-649,20,1231-1255,25,650-1230,581,630-1255,626
+PRRT-valid,2252-2276,25,3506-3529,24,2277-3505,1229,2252-3529,1278
+INT-valid,4173-4192,20,5066-5087,22,4193-5065,873,4173-5087,915
