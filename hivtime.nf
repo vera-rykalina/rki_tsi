@@ -42,7 +42,6 @@ params.hiv_distance_normalisation = "${projectDir}/data/phyloscanner/HIV_Distanc
 params.k = 15
 
 // Parameters for HIV-PhyloTSI
-params.model = "${projectDir}/bin/Model"
 params.seqprotocol = "amplicons"
 params.mode = "paired"
 
@@ -72,6 +71,7 @@ if ( ! (params.mode in modes) ) {
     exit 1, "Unknown mode. Choose from " + modes
 }
 
+
 Set seqprotocols = ['amplicons', 'capture']
 if ( ! (params.seqprotocol in seqprotocols) ) {
     exit 1, "Unknown protocol. Choose from " + seqprotocols
@@ -90,6 +90,19 @@ if ( !params.krakendb ) {
 params.primers = null
 if ( !params.primers ) {
     exit 1, "Missing input, use [--primers]"
+}
+
+
+
+Set genomes = ['full', 'partial']
+if ( ! (params.genome in genomes) ) {
+    exit 1, "Unknown genome. Choose from " + genomes
+}
+
+if ( params.genome == 'partial' ) {
+  params.model = "${projectDir}/bin/models/partial"
+} else {
+  params.model = "${projectDir}/bin/models/full"
 }
 
 
@@ -133,6 +146,8 @@ def helpMSG() {
     --alignment         Define the path of a FASTA file containing the HIV alignment [default: data/alignments/HIV1_COM_2022_genome_DNA.fasta].
     
     --seqprotocol       Choose from [amplicons, capture]  [default: amplicons].
+
+    --genome            Choose from [full, partial].
 
     """
 }
@@ -1075,14 +1090,29 @@ process PHYLO_TSI {
   
   script:
     set_protocol = params.seqprotocol == 'amplicons' ? '--amplicons True' : '--amplicons False'
+
+    if ( params.mode == "full") {
     """
-    HIVPhyloTSI.py \
+    HIVPhyloTSI_full_genome.py \
       -d ${params.model} \
       -p ${patstat} \
       -m ${maf} \
       -o phylo_tsi.csv \
       ${set_protocol}
     """ 
+  
+  } if else (params.mode == "partial") {
+    """
+    HIVPhyloTSI_partial_genome.py \
+      -d ${params.model} \
+      -p ${patstat} \
+      -m ${maf} \
+      -r ${regions} \
+      -o phylo_tsi.csv \
+      --modelname SK \
+      ${set_protocol}
+    """
+  }
 }
 
 process MAPPING_NOTES {
