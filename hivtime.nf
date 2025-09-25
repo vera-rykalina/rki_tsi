@@ -3,14 +3,14 @@ nextflow.enable.dsl = 2
 // Run
 
 /* nextflow hivtime.nf \
--c hivtime_profile.config 
---outdir output_pe
---fastq "/path/rki_tsi/paired_reads/*R{1,2}*.fastq.gz" 
--profile rki_slurm,rki_mamba \
+-c hivtime_profile.config \
+--outdir outpit_folder_name \
+--fastq "/path/rki_tsi/fastq/*R{1,2}*.fastq.gz" \ 
 --krakendb /path/databases/kraken2/kraken2_nt_20231129/ \
---mode paired 
---alignment /path/rki_tsi/data/HIV1_COM_2022_genome_DNA.fasta \
+--mode paired \
 --primers /path/rki_tsi/data/primers/primers_GallEtAl2012.fasta \
+--genome partial \
+-profile rki_slurm,rki_conda \
 -resume
 */
 
@@ -1079,11 +1079,12 @@ process PHYLOSCANNER_TREE_ANALYSIS {
 process PHYLO_TSI {
   conda "${projectDir}/env/phylo_tsi.yml"
   publishDir "${params.outdir}/10_phylo_tsi/reports", mode: "copy", overwrite: true
-  //debug true
+  debug true
 
   input:
     path patstat
     path maf
+    path regions
     
   output:
     path "phylo_tsi.csv"
@@ -1091,7 +1092,7 @@ process PHYLO_TSI {
   script:
     set_protocol = params.seqprotocol == 'amplicons' ? '--amplicons True' : '--amplicons False'
 
-    if ( params.mode == "full") {
+    if ( params.genome == "full" ) {
     """
     HIVPhyloTSI_full_genome.py \
       -d ${params.model} \
@@ -1101,7 +1102,7 @@ process PHYLO_TSI {
       ${set_protocol}
     """ 
   
-  } if else (params.mode == "partial") {
+  } else if ( params.genome == "partial" ) {
     """
     HIVPhyloTSI_partial_genome.py \
       -d ${params.model} \
@@ -1176,6 +1177,7 @@ process REPORT {
 
 // ****************************************************INPUT CHANNELS**********************************************************
 ch_ref_hxb2 = Channel.fromPath("${projectDir}/data/refs/HXB2_refdata.csv", checkIfExists: true)
+ch_regions = Channel.fromPath("${projectDir}/bin/models/partial/regions.csv", checkIfExists: true)
 
 
 if (params.mode == 'paired') {
@@ -1267,7 +1269,7 @@ workflow {
     ch_install_phyloscannerR = PHYLOSCANNER_R_INSTALL ( )
     ch_analysed_trees = PHYLOSCANNER_TREE_ANALYSIS ( ch_install_phyloscannerR, ch_iqtree.Treefile.collect())
     // *******************************************************HIVPhyloTSI*****************************************************************
-    ch_phylo_tsi = PHYLO_TSI ( ch_analysed_trees.patstat_csv, ch_joined_maf )
+    ch_phylo_tsi = PHYLO_TSI ( ch_analysed_trees.patstat_csv, ch_joined_maf, ch_regions )
     // Report
     ch_hivtime_report = REPORT ( ch_phylo_tsi, ch_multiqc_report, ch_mapping_notes_all )
 }
