@@ -9,7 +9,7 @@ nextflow.enable.dsl = 2
 --krakendb /path/databases/kraken2/kraken2_nt_20231129/ \
 --mode paired \
 --primers /path/rki_tsi/data/primers/primers_GallEtAl2012.fasta \
---genome partial \
+--genome full \
 -profile rki_slurm,rki_conda \
 -resume
 */
