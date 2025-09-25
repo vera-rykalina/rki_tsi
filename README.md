@@ -74,5 +74,6 @@ nextflow hivtime.nf \
 --krakendb /path_to_krakendb/kraken2_nt_20231129/ \
 --mode paired \
 --primers ../rki_tsi/data/primers/primers_GallEtAl2012.fasta \
+--genome full \
 -resume (optional)
 ```
