@@ -70,7 +70,7 @@ nextflow hivtime.nf \
  -c hivtime_profile.config \
  --outdir Results \
  --fastq "/path_to_your_fastq_files/*R{1,2}*.fastq.gz" \
- -profile rki_slurm,rki_mamba \
+ -profile rki_slurm,rki_conda \
 --krakendb /path_to_krakendb/kraken2_nt_20231129/ \
 --mode paired \
 --primers ../rki_tsi/data/primers/primers_GallEtAl2012.fasta \
