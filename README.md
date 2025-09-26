@@ -2,7 +2,7 @@
 HIVtime is a seamless pipeline developed to implement the HIV-phyloTSI method. The [method](https://www.medrxiv.org/content/10.1101/2022.05.15.22275117v1) was designed to estimate time since infection (TSI) using HIV deep-sequencing data. The source code and documentation are available on the HIV-phyloTSI GitHub repository [page](https://github.com/BDI-pathogens/HIV-phyloTSI/tree/main).
 
 ## Pipeline workflow
-![Plot](/images/HIVtime.svg)
+![Plot](/images/images_svg/HIVtime.svg)
 
 ## Tools
 The pipeline includes the following tools:
@@ -85,4 +85,4 @@ Below is the PCR settings scheme which visually represents PCR product coverage.
 I also developed a fully automated Nextflow pipeline for remodelling to be able to generate models for different lab settings (partial or full _gag_ and _pol_ genomic regions). Below is the pipeline metro map.
 
 ## Remodelling pipeline workflow
-![Plot](/images/retraining.svg)
+![Plot](/images/images_svg/retraining.svg)
