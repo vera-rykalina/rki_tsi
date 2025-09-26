@@ -77,3 +77,12 @@ nextflow hivtime.nf \
 --genome full \
 -resume (optional)
 ```
+
+## Models
+The current version of the HIVtime includes 2 models: the original HIV-phyloTSI (full genomes) and recalibrated model for partial genomes (IGS PCR settings). 
+![Plot](/images/hiv_genes_coverage_clipped_sk.png)
+Below is the PCR settings scheme which visually represents PCR product coverage. The primer sequences can be found here: **/rki_tsi/data/primers/primers_sk_validation**. The model I built for partial genome includes partial _gag_ and _pol_ regions that cover 26.30% (vs 69.99% of HIV-phyloTSI) of the HXB2 genome (K03455). 
+I also developed a fully automated Nextflow pipeline for remodelling to be able to generate models for different lab settings (partial or full _gag_ and _pol_ genomic regions). Below is the pipeline metro map.
+
+## Remodelling pipeline workflow
+![Plot](/images/retraining_pipeline_400_dpi.png)
