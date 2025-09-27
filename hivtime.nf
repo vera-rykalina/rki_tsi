@@ -101,7 +101,7 @@ if ( ! (params.genome in genomes) ) {
 
 if ( params.genome == 'partial' ) {
   params.model = "${projectDir}/bin/models/partial"
-} else {
+} else if ( params.genome == 'full' ) {
   params.model = "${projectDir}/bin/models/full"
 }
 
