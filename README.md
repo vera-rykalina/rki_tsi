@@ -79,7 +79,7 @@ nextflow hivtime.nf \
 ```
 
 ## Models
-The current version of the HIVtime includes 2 models: the original HIV-phyloTSI (full genomes) and recalibrated model for partial genomes (IGS PCR settings). 
+The current version of the HIVtime includes 2 models: the original HIV-phyloTSI (full genomes) and recalibrated model for partial genomes (SK PCR settings). 
 
 ![Plot](/images/hiv_genes_coverage_clipped.png)
 
