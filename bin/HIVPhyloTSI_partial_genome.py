@@ -15,7 +15,7 @@ Two CSV files:
             MAF = (1-(A+C+G+T))/(A+C+G+T)
 
 Output:
-A CSV file is produced that contains the aggregated values for gag, pol, gp120 and gp41 regions for MAF at codon position 1/2 and codon position 3, largest.subgraph.rtt from phyloscanner (LRTT), number of tips and whether the sample looks like a dual infection. A binary indicator of amplicon-based sequencing is also added (is_mrc). The final columns are the predictions from the model, as follows:
+A CSV file is produced that contains the aggregated values for gag, pol, gp120 and gp41 regions for MAF at codon position 1/2 and codon position 3, largest.subgraph.rtt from phyloscanner (LRTT), number of tips and whether the sample looks like a dual infection. A binary indicator of amplicon-based sequencing is also added (is_amp). The final columns are the predictions from the model, as follows:
 
 Square root TSI values:
   RF_pred_sqrt - prediction of square-root transformed TSI
@@ -247,7 +247,7 @@ def _impute_knn(X, k=3):
 
 def prepare_data(full_scaler, Xgene_means, modelfeats, is_amplicons=False):
     seqtype = pd.DataFrame(index=Xgene_means.index)
-    seqtype['is_mrc'] = int(is_amplicons)
+    seqtype['is_amp'] = int(is_amplicons)
     data_for_model = pd.concat((seqtype, Xgene_means), axis=1)[modelfeats]
     data_for_model_z = full_scaler.transform(data_for_model)
     data_for_model_imp = _impute_knn(data_for_model_z)
