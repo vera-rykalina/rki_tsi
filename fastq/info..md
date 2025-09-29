@@ -1,0 +1,1 @@
+# You can copy your fastq.gz files into this folder for simplicity 
