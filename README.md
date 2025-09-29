@@ -87,5 +87,5 @@ Below is the PCR settings scheme which visually represents PCR product coverage.
 
 I also developed a fully automated Nextflow pipeline for remodelling to be able to generate models for different lab settings (partial or full _gag_ and _pol_ genomic regions). Below is the pipeline metro map.
 
-## Remodelling pipeline workflow
+## Remodeling pipeline workflow
 ![Plot](/images/retraining_500_dpi.png)
