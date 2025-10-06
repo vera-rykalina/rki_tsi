@@ -7,7 +7,6 @@ nextflow.enable.dsl = 2
 --outdir outpit_folder_name \
 --fastq "/path/rki_tsi/fastq/*R{1,2}*.fastq.gz" \ 
 --krakendb /path/databases/kraken2/kraken2_nt_20231129/ \
---mode paired \
 --primers /path/rki_tsi/data/primers/primers_GallEtAl2012.fasta \
 --genome full \
 -profile rki_slurm,rki_conda \
