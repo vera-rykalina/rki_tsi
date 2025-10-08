@@ -9,6 +9,7 @@ nextflow.enable.dsl = 2
 --krakendb /path/databases/kraken2/kraken2_nt_20231129/ \
 --primers /path/rki_tsi/data/primers/primers_GallEtAl2012.fasta \
 --genome full \
+--modelname SK \
 -profile rki_slurm,rki_conda \
 -resume
 */
@@ -43,6 +44,7 @@ params.k = 15
 // Parameters for HIV-PhyloTSI
 params.seqprotocol = "amplicons"
 params.mode = "paired"
+
 
 params.normalisation = "${projectDir}/bin/tools/CalculateTreeSizeInGenomeWindows.py"
 
@@ -92,18 +94,23 @@ if ( !params.primers ) {
 }
 
 
-
 Set genomes = ['full', 'partial']
 if ( ! (params.genome in genomes) ) {
     exit 1, "Unknown genome. Choose from " + genomes
 }
 
 if ( params.genome == 'partial' ) {
-  params.model = "${projectDir}/bin/models/partial"
+  params.modelfolder = "${projectDir}/bin/models/partial"
+  modlelname = params.modelname
 } else if ( params.genome == 'full' ) {
-  params.model = "${projectDir}/bin/models/full"
+  params.modelfolder = "${projectDir}/bin/models/full"
 }
 
+
+params.modelname = null
+if (params.genome == "partial" && !params.modelname ) {
+    exit 1, "Missing model name, use [--modelname]"
+}
 
 def helpMSG() {
     c_green = "\033[0;32m";
@@ -147,6 +154,8 @@ def helpMSG() {
     --seqprotocol       Choose from [amplicons, capture]  [default: amplicons].
 
     --genome            Choose from [full, partial].
+
+    --modelname         Only valid for partial genomes. Use your model name (e.g. SK, IGS etc.)
 
     """
 }
@@ -1094,7 +1103,7 @@ process PHYLO_TSI {
     if ( params.genome == "full" ) {
     """
     HIVPhyloTSI_full_genome.py \
-      -d ${params.model} \
+      -d ${params.modelfolder} \
       -p ${patstat} \
       -m ${maf} \
       -o phylo_tsi.csv \
@@ -1104,12 +1113,12 @@ process PHYLO_TSI {
   } else if ( params.genome == "partial" ) {
     """
     HIVPhyloTSI_partial_genome.py \
-      -d ${params.model} \
+      -d ${params.modelfolder} \
       -p ${patstat} \
       -m ${maf} \
       -r ${regions} \
       -o phylo_tsi.csv \
-      --modelname SK \
+      --modelname ${params.modelname} \
       ${set_protocol}
     """
   }
