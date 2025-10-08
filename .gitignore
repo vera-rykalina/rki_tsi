@@ -4,6 +4,7 @@ work/
 conda/
 HTML/*
 Results*
+Result*
 output/
 output_pe/
 output_se/
