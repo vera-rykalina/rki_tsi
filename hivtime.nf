@@ -132,7 +132,10 @@ def helpMSG() {
   
 
     ${c_yellow}Usage examples:${c_reset}
-    nextflow hivtime.nf -c profile.config --fastq '*R{1,2}.fastq.gz' --krakendb db --primers primers.fasta --mode paired -profile profile --outdir output 
+    nextflow hivtime.nf -c profile.config --fastq '*R{1,2}.fastq.gz' --krakendb db --primers primers.fasta -profile profile --outdir output --genome full
+
+      ${c_yellow}Usage examples:${c_reset}
+    nextflow hivtime.nf -c profile.config --fastq '*R{1,2}.fastq.gz' --krakendb db --primers primers.fasta -profile profile --outdir output --genome partial --modelname SK
    
     
     ${c_green}Settings:${c_reset}  
@@ -155,7 +158,7 @@ def helpMSG() {
 
     --genome            Choose from [full, partial].
 
-    --modelname         Only valid for partial genomes. Use your model name (e.g. SK, IGS etc.)
+    --modelname         Only valid for partial genomes. Use model name (e.g. SK, IGS etc.)
 
     """
 }
