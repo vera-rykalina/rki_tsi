@@ -63,7 +63,9 @@ I personally use this [database](https://benlangmead.github.io/aws-indexes/k2) (
 ```sh
 conda activate nextflow
 ```
-- Run the pipeline (example run, for more information use **--help**): 
+### Examples (for more information use **--help**)
+
+- PE reads, full-length genomes: 
 
 ```sh
 nextflow hivtime.nf \
@@ -72,9 +74,38 @@ nextflow hivtime.nf \
  --fastq "/path_to_your_fastq_files/*R{1,2}*.fastq.gz" \
  -profile rki_slurm,rki_conda \
 --krakendb /path_to_krakendb/kraken2_nt_20231129/ \
---mode paired \
 --primers ../rki_tsi/data/primers/primers_GallEtAl2012.fasta \
 --genome full \
+-resume (optional)
+```
+
+- SE reads, full-length genomes: 
+
+```sh
+nextflow hivtime.nf \
+ -c hivtime_profile.config \
+ --outdir Results \
+ --fastq "/path_to_your_fastq_files/*R{1,2}*.fastq.gz" \
+ -profile rki_slurm,rki_conda \
+--krakendb /path_to_krakendb/kraken2_nt_20231129/ \
+--primers ../rki_tsi/data/primers/primers_GallEtAl2012.fasta \
+--genome full \
+--mode single \
+-resume (optional)
+```
+
+- PE reads, partial genomes: 
+
+```sh
+nextflow hivtime.nf \
+ -c hivtime_profile.config \
+ --outdir Results \
+ --fastq "/path_to_your_fastq_files/*R{1,2}*.fastq.gz" \
+ -profile rki_slurm,rki_conda \
+--krakendb /path_to_krakendb/kraken2_nt_20231129/ \
+--primers ../rki_tsi/data/primers/primers_GallEtAl2012.fasta \
+--genome partial \
+--modelname SK \
 -resume (optional)
 ```
 
