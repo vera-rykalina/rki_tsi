@@ -58,12 +58,11 @@ I personally use this [database](https://benlangmead.github.io/aws-indexes/k2) (
 
 
 
-## Usage
+## Usage Examples (for more information use **--help**)
 - Activate the *nextflow* environment:
 ```sh
 conda activate nextflow
 ```
-### Examples (for more information use **--help**)
 
 - PE reads, full-length genomes: 
 
