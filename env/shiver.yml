@@ -1,6 +1,6 @@
 channels:
-  - bioconda
   - conda-forge
+  - bioconda
 dependencies:
   - python >= 3.6
   - bzip2 = 1.0.8

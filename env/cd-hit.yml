@@ -1,5 +1,5 @@
 channels:
- - bioconda
  - conda-forge
+ - bioconda
 dependencies:
  - cd-hit = 4.8.1
