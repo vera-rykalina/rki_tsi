@@ -132,9 +132,9 @@ def helpMSG() {
   
 
     ${c_yellow}Usage examples:${c_reset}
+
     nextflow hivtime.nf -c profile.config --fastq '*R{1,2}.fastq.gz' --krakendb db --primers primers.fasta -profile profile --outdir output --genome full
 
-    ${c_yellow}Usage examples:${c_reset}
     nextflow hivtime.nf -c profile.config --fastq '*R{1,2}.fastq.gz' --krakendb db --primers primers.fasta -profile profile --outdir output --genome partial --modelname SK
    
     
