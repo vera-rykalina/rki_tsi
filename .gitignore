@@ -11,7 +11,7 @@ output_se/
 single_reads/
 paired_reads/
 shiver/
-phyloscanner/
+software/*
 HIV-phyloTSI/
 output_pe_kraken_filter/
 shiver_align_mafft_7.525.command.log
