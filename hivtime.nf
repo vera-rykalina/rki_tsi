@@ -4,7 +4,7 @@ nextflow.enable.dsl = 2
 
 /* nextflow hivtime.nf \
 -c hivtime_profile.config \
---outdir outpit_folder_name \
+--outdir output_folder_name \
 --fastq "/path/rki_tsi/fastq/*R{1,2}*.fastq.gz" \ 
 --krakendb /path/databases/kraken2/kraken2_nt_20231129/ \
 --primers /path/rki_tsi/data/primers/primers_GallEtAl2012.fasta \
@@ -223,7 +223,7 @@ process FASTP {
 }
 
 process FASTP_FASTQC {
-  conda "${projectDir}/env/fastqc.yml"
+   conda "${projectDir}/env/fastqc.yml"
  //publishDir "${params.outdir}/trimmed_fastqc/${id}", mode: "copy", overwrite: true
  // debug true
 
@@ -639,7 +639,7 @@ process FASTQ_RENAME_HEADER {
    """
 } else if (params.mode == "single") {
       """
-      zcat ${reads[0]} |\
+    zcat ${reads[0]} |\
       sed 's/kraken:taxid.*//' |\
       sed 's/:N:0:.*//' |\
       awk '{if (NR%4 == 1) {print \$1 "/" \$2} else print}' |\
