@@ -119,3 +119,14 @@ I also developed a fully automated Nextflow pipeline for remodeling to be able t
 
 ## Remodeling pipeline workflow
 ![Plot](/images/retraining_500_dpi.png)
+
+## Notes
+Our FASTQ files follow a specific filename structure (^([\w]+_)*HIV\d{2}-\d{5}_([\w]+_)*R[12]_\d{3}\.fastq\.gz$) that contains the HIV prefix before the sample ID (HIV\d{2}-\d{5}). I use this HIV prefix to extract the sample ID with an additional line of code. If you have a different filename pattern, simply comment out this line of code in the hivtime.nf script, like this (or use your own method for splitting the filename):
+
+```sh
+if (params.mode == 'paired') {
+        ch_input_fastq = Channel
+        .fromFilePairs( params.fastq, checkIfExists: true )
+        //.map { tuple ( it[0].split("HIV")[1].split("_")[0], [it[1][0], it[1][1]]) } <- change is here!
+```
+
