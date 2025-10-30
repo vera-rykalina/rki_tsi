@@ -123,6 +123,7 @@ I also developed a fully automated Nextflow pipeline for remodeling to be able t
 ## Notes
 
 - Input FASTQ files
+
 Our FASTQ files follow a specific filename structure:
 
 ^([\w]+_)*HIV\d{2}-\d{5}_([\w]+_)*R[12]_\d{3}\.fastq\.gz$
@@ -145,4 +146,5 @@ if (params.mode == 'paired') {
 ```
 
 - Configuration
+
 Please be aware that this pipeline is computationally intensive (especially the phylogeny part), which is why it is configured to run on an HPC system. My Slurm profile (rki_slurm) is optimized for a batch size of about 20 samples. If you plan to use different settings, consider creating your own profile.
