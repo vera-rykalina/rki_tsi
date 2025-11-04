@@ -1,0 +1,14 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: HIVtime
+message: >-
+  A seamless Nextflow pipeline for estimating time since
+  HIV-1 infection.
+type: software
+authors:
+  - given-names: Vera
+    family-names: Rykalina
+keywords:
+  - 'HIVtime, TSI, HIV-1'
