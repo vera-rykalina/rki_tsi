@@ -4,11 +4,13 @@
 cff-version: 1.2.0
 title: HIVtime
 message: >-
-  A seamless Nextflow pipeline for estimating time since
-  HIV-1 infection.
+  HIVtime: A Seamless Pipeline for Estimating Time since
+  HIV-1 Infection
 type: software
 authors:
   - given-names: Vera
     family-names: Rykalina
+repository-code: 'https://github.com/vera-rykalina/rki_tsi.git'
 keywords:
-  - 'HIVtime, TSI, HIV-1'
+  - 'HIV-1, Time since Infection, HIV-PhyloTSI'
+license: GPL-3.0
